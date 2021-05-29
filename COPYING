@@ -1,0 +1,8 @@
+(C) 2021, Yoxem Chen (aka Tan Kian-thing). Under GPL v3.
+
+The pdf.js part (in thirdparty/) is under Apache License 2.0<https://github.com/mozilla/pdf.js/blob/master/LICENSE>,
+authore are listed here: https://github.com/mozilla/pdf.js/blob/master/AUTHORS
+
+The icons is based on the work from Tango Project (http://tango.freedesktop.org,
+download link: http://tango.freedesktop.org/releases/tango-icon-theme-0.8.90.tar.gz under Public Domain.
+staff: http://tango.freedesktop.org/The_People). Part of the icons are modified by Yoxem Chen.
