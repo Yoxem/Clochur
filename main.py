@@ -216,6 +216,8 @@ class ClochurLexer(QsciLexerCustom):
 
         self.PRIMARY = ['define', 'let' , '#t', '#f', 'lambda', '@', 'cond', 'if', 'docu']
 
+        #self.rainbow_state = 0
+
 
     def language(self):
         return "Clochur"
@@ -301,9 +303,9 @@ class ClochurLexer(QsciLexerCustom):
 
             i = 0
             if index > 0:
-                pos = SCI(QsciScintilla.SCI_GETLINEENDPOSITION, index - 1)
-                rainbow_state = SCI(QsciScintilla.SCI_GETSTYLEAT, pos) + 0
-                print(rainbow_state)
+            #    pos = SCI(QsciScintilla.SCI_GETLINEENDPOSITION, index - 1)
+                rainbow_state = SCI(QsciScintilla.SCI_GETLINESTATE, index - 1)
+            #    print(rainbow_state)
 
             for item in line_utf8_splitted_len_pair:
 
@@ -320,9 +322,9 @@ class ClochurLexer(QsciLexerCustom):
                 #parenthesis: rainbow mode
                 elif item["str"] == "[":
                     new_state = getattr(self, "Rainbow" + str(rainbow_state))
-                    rainbow_state += 1
+                    rainbow_state = (rainbow_state + 1) % 7
                 elif item["str"] == "]":
-                    rainbow_state -= 1
+                    rainbow_state = (rainbow_state - 1) % 7
                     new_state = getattr(self, "Rainbow" + str(rainbow_state))
                 else:
                     pass
@@ -333,6 +335,8 @@ class ClochurLexer(QsciLexerCustom):
 
                 if new_state != self.Comment:
                     new_state = self.Default
+
+                SCI(QsciScintilla.SCI_SETLINESTATE, index, rainbow_state)
         
 
 

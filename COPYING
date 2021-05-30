@@ -6,3 +6,8 @@ authore are listed here: https://github.com/mozilla/pdf.js/blob/master/AUTHORS
 The icons is based on the work from Tango Project (http://tango.freedesktop.org,
 download link: http://tango.freedesktop.org/releases/tango-icon-theme-0.8.90.tar.gz under Public Domain.
 staff: http://tango.freedesktop.org/The_People). Part of the icons are modified by Yoxem Chen.
+
+some code parts are from Infobiotics Dashboard (for Infobiotics Workbench)
+Copyright 2008, 2009, 2010 Jonathan Blakes, jvb@cs.nott.ac.uk
+Released under GNU GPL version 3.
+url: https://github.com/jvb/infobiotics-dashboard/
