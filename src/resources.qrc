@@ -17,5 +17,6 @@
 	<file alias="text-strikethrough.svg">resources/text-strikethrough.svg</file>
 	<file alias="text-underline.svg">resources/text-underline.svg</file>
 	<file alias="undo.svg">resources/undo.svg</file>
+	<file alias="logo.svg">resources/logo.svg</file>
 </qresource>
 </RCC>
