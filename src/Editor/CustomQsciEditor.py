@@ -1,7 +1,7 @@
 from PyQt5.QtGui import *
 from PyQt5.Qsci import QsciScintilla
 
-from EditorOther.ClochurLexer import ClochurLexer
+from .ClochurLexer import ClochurLexer
 
 class CustomQsciEditor(QsciScintilla):
     def __init__(self, parent=None):

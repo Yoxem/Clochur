@@ -10,8 +10,10 @@ from PyQt5 import QtWebEngineWidgets
 from PyQt5.QtWidgets import *
 from PyQt5.Qsci import QsciScintilla
 
-import qrc_resources
-from EditorOther import FindReplace, CustomQsciEditor
+from . import qrc_resources
+from . import FindReplace, CustomQsciEditor
+
+from . import __about__
 
 filename = None
 
@@ -20,6 +22,7 @@ dirname = os.path.abspath(os.path.dirname(__file__)) #os.path.dirname('__file__'
 PDFJS = os.path.join(dirname, '../thirdparty/pdfjs/web/viewer.html')
 PDF = os.path.join(dirname, 'example.pdf')
 
+app = None
 
 
 '''Widget for PDF file viewer'''
@@ -222,7 +225,7 @@ class Window(QMainWindow):
         if self.editor.isModified():
             reply = QMessageBox.question(self,'','Do You want to save this file? The text has been modified', QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel, QMessageBox.No)
             if reply == QMessageBox.Yes:
-                file_path = QFileDialog.getSaveFileName(self, 'Save file as...', opened_file_dirname, "CLC typesetting format (*.clc)")
+                file_path = QFileDialog.getSaveFileName(self, 'Save file as...', self.opened_file_dirname, "CLC typesetting format (*.clc)")
                 if file_path[0] != '':
                     self.file = open(file_path[0], 'w', encoding='utf-8')
                     file_content = editor.text()
@@ -265,11 +268,9 @@ class Window(QMainWindow):
         self.editor.selectAll()
 
     def about_call(self):
-        about_content = '''A S-expression-like typesetting language powered by SILE engine with a simple text text editor.
-http://yoxem.github.com
-(c) 2021 Yoxem Chen <yoxem.tem98@nctu.edu.tw>'''
+        
 
-        self.about_dialog = QMessageBox.about(self, "About Clochur", about_content)
+        self.about_dialog = QMessageBox.about(self, "About Clochur", __about__.version_no+"\n"+__about__.about_info)
                 
 
     def _createEditToolBar(self):
@@ -362,10 +363,9 @@ http://yoxem.github.com
 
 
 
+def entry_point():
+    global app
 
-
-
-if __name__ == '__main__':
     app = QApplication([])
     window = Window()
 
@@ -396,7 +396,7 @@ if __name__ == '__main__':
     untitled_title = window.generate_untitled_title()
 
     if window.file != None:
-        app.setApplicationName("Clochur - %s" % os.path.basename(window.file))
+        app.setApplicationName("Clochur - %s" %     os.path.basename(window.file))
     else:
         app.setApplicationName("Clochur - %s" % untitled_title)
 
