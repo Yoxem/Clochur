@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+#-*-coding:utf-8-*-
 
 import re
 from PyQt5.Qsci import QsciLexerCustom, QsciScintilla
@@ -30,6 +32,8 @@ class ClochurLexer(QsciLexerCustom):
         self.PARENTHESIS = ["[", "]"]
 
         self.PRIMARY = ['define', 'let' , '#t', '#f', 'lambda', '@', 'cond', 'if', 'docu']
+
+        self.split_pattern = re.compile(r'(\s+|\\%|%|\\\[|\\\]|[[]|[]])')
 
         font = QFont()
         font.setFamily(parent.font_family)
@@ -110,9 +114,7 @@ class ClochurLexer(QsciLexerCustom):
 
             line_utf8 = line.decode('utf-8')
 
-            split_pattern = re.compile(r'(\s+|\\%|%|\\\[|\\\]|[[]|[]])')
-
-            line_utf8_splitted = split_pattern.split(line_utf8)
+            line_utf8_splitted = self.split_pattern.split(line_utf8)
 
             line_utf8_splitted_len_pair = [{"str": item, "len" : len(bytearray(item, "utf-8"))} for item in line_utf8_splitted]
 

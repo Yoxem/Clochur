@@ -130,3 +130,6 @@ dmypy.json
 
 #backup file
 *~
+
+# VS Code
+launch.json
