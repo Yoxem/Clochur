@@ -6,6 +6,7 @@ class Parser():
 
     def __init__(self):
         float_pattern  =r"(?P<flo>[+-]?\d+[.]\d+)"
+        bool_pattern = r"(?P<bool>True|False)"
         int_pattern  =r"(?P<int>[+-]?\d+)"
         symbol_pattern = r"(?P<sym>[_a-zA-Z][-!._0-9a-zA-Z]*)"
         string_pattern = r"(?P<str>[\"]([^\"\\]|[\][\\\"\n\t])*[\"])"
@@ -16,7 +17,8 @@ class Parser():
         inside_docu_pattern = r"(?P<other>([^%\[\]\n\s\\]|[\\][%\[\]]?)+)"
 
 
-        self.total_pattern = re.compile("|".join([float_pattern,int_pattern,symbol_pattern,string_pattern,parenthesis_pattern,
+        self.total_pattern = re.compile("|".join([float_pattern,bool_pattern,int_pattern,symbol_pattern,
+                                                string_pattern,parenthesis_pattern,
                                                 percent_pattern,inside_docu_pattern,space_pattern,newline_pattern]))
 
         self.clc_sexp = None
@@ -201,7 +203,7 @@ class Intepreter:
 
             else:
                 return sexp["token"]
-        elif sexp[0]["token"] in ["+", "-", "*", "/"]:
+        elif sexp[0]["token"] in ["+", "-", "*", "/", "<", "=", ">", "<=", ">="]:
             if len(sexp) != 3:
                 raise Exception("Ln %d, Col %d: the argument length %d of %s is not correct." %
                         (sexp[0]["line"], sexp[0]["col"], len(sexp), a.generate_printable_sexp(sexp)))
@@ -212,8 +214,19 @@ class Intepreter:
                     return self.interprete_aux(sexp[1]) - self.interprete_aux(sexp[2])
                 elif sexp[0]["token"] == "*":
                     return self.interprete_aux(sexp[1]) * self.interprete_aux(sexp[2])
-                else:
+                elif sexp[0]["token"] == "/":
                     return self.interprete_aux(sexp[1]) / self.interprete_aux(sexp[2])
+                elif sexp[0]["token"] == "<":
+                    return self.interprete_aux(sexp[1]) < self.interprete_aux(sexp[2])
+                elif sexp[0]["token"] == "=":
+                    return self.interprete_aux(sexp[1]) == self.interprete_aux(sexp[2])
+                elif sexp[0]["token"] == ">":
+                    return self.interprete_aux(sexp[1]) > self.interprete_aux(sexp[2]) 
+                elif sexp[0]["token"] == ">=":
+                    return self.interprete_aux(sexp[1]) <= self.interprete_aux(sexp[2])
+                else:
+                    return self.interprete_aux(sexp[1]) >= self.interprete_aux(sexp[2]) 
+                                        
         
         # macro expanding
         elif sexp[0]["token"] in self.macro_list.keys():
@@ -254,6 +267,16 @@ class Intepreter:
                         (sexp[1]["line"], sexp[1]["col"], sexp[1], sexp[1]["type"]))
             else:        
                 self.env[-1][sexp[1]["token"]] = self.interprete_aux(sexp[2])
+        elif sexp[0]["token"] == "if":
+            if len(sexp) != 4:
+                raise Exception("Ln %d, Col %d: the number of argument of if should be 3." %
+                        (sexp[0]["line"], sexp[0]["col"]))
+            cond = self.interprete_aux(sexp[1])
+            if cond:
+                return self.interprete_aux(sexp[2])
+            else:
+                return self.interprete_aux(sexp[3])
+
         elif sexp[0]["token"] == "str":
             if len(sexp) != 2:
                 raise Exception("Ln %d, Col %d: the argument number of str should be 1" %
@@ -421,6 +444,10 @@ text = '''
     [[_ x y z...] [+ x [bar y z...]]]]
 
 [print[str[bar 156 6546 146514 10 6]]]
+
+[define fac [lambda [x] [if [= x 1] 1 [*  x  [fac [- x 1]]]]]]
+
+[print [fac 6]]
 
 [+[- 2 3][* 5.0 6]]
 [define var1 [+[- 2 3][* 5.0 6]]]
