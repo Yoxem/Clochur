@@ -7,7 +7,7 @@ class Parser():
     def __init__(self):
         float_pattern  =r"(?P<flo>[+-]?\d+[.]\d+)"
         int_pattern  =r"(?P<int>[+-]?\d+)"
-        symbol_pattern = r"(?P<sym>[_a-zA-Z][!._0-9a-zA-Z]*)"
+        symbol_pattern = r"(?P<sym>[_a-zA-Z][-!._0-9a-zA-Z]*)"
         string_pattern = r"(?P<str>[\"]([^\"\\]|[\][\\\"\n\t])*[\"])"
         parenthesis_pattern = r"(?P<paren>[[]|[]])"
         percent_pattern = r"(?P<percent>[%])"
@@ -136,35 +136,18 @@ class Parser():
 
             
 
-'''test'''
-a = Parser()
-text = '''[+[- 2 3][* 5.0 6]]
-[define var1 [+[- 2 3][* 5.0 6]]]
-[set! var1 [* 10 2]]
-[define foo [lambda [x y] [begin [+ x y][set! var1 10] 7]]]
-[foo 12 5]
-[print [+ var1 5]]
-'''
 
-"""text = '''[[[ 123 1.23 abc "\\123\\\"貓貓貓"] 我是貓，喵\[喵\]貓\%。喵喵%喵
-]]'''
-"""
 
-a.get_clc_sexp(text)
 
-#print(a.parse_tree)
-print(a.generate_printable_sexp(a.parse_tree))
 
 
 '''
 macro expansion for example:
 
 the eclipsis (...) shouldn't be seperated from variable.
-[def-syntax foo #:with-space
+[def-syntax foo
     [[_ x y] [+ x y]]
-    [[_ x y z...] [+ x [foo y z...]]]
-]
-'''
+    [[_ x y z...] [+ x [foo y z...]]]]'''
 
 class Intepreter:
     def __init__(self):
@@ -231,18 +214,58 @@ class Intepreter:
                     return self.interprete_aux(sexp[1]) * self.interprete_aux(sexp[2])
                 else:
                     return self.interprete_aux(sexp[1]) / self.interprete_aux(sexp[2])
+        
+        # macro expanding
+        elif sexp[0]["token"] in self.macro_list.keys():
+            macro_pair = self.macro_list[sexp[0]["token"]]
+            
+            is_found = False
+            macro_len = len(sexp)
+
+            unification = dict()
+
+            for i in macro_pair:
+                if len(i["before"]) == macro_len:
+                    unification = self.unify(sexp, i["before"], unification)
+                    syntax_after = i["after"]
+                    is_found = True
+                    break
+                elif len(i["before"]) < macro_len and re.match(r".+[.]{3}$", i["before"][-1]["token"]):
+                    unification = self.unify(sexp, i["before"], unification)
+                    syntax_after = i["after"]
+                    is_found = True
+                    break
+                else:
+                    pass
+            
+            if not is_found:
+                raise Exception("The syntax pattern for %s is not found." % a.generate_printable_sexp(sexp))
+            else:
+                new_sexp = self.macro_expand(syntax_after, unification)
+                
+                return self.interprete_aux(new_sexp)
+
+                
+                #elif len(i["before"]) < macro_len and 
+
         elif sexp[0]["token"] == "define":
             if sexp[1]["type"] != "sym":
                 raise Exception("Ln %d, Col %d: the type of %s should be symbol, not %s" %
                         (sexp[1]["line"], sexp[1]["col"], sexp[1], sexp[1]["type"]))
             else:        
                 self.env[-1][sexp[1]["token"]] = self.interprete_aux(sexp[2])
+        elif sexp[0]["token"] == "str":
+            if len(sexp) != 2:
+                raise Exception("Ln %d, Col %d: the argument number of str should be 1" %
+                        (sexp[0]["line"], sexp[0]["col"]))
+            else:
+                return str(self.interprete_aux(sexp[1]))
         elif sexp[0]["token"] == "print":
             if len(sexp) != 2:
                 raise Exception("Ln %d, Col %d: the argument number of print should be 1" %
                         (sexp[0]["line"], sexp[0]["col"]))
             else:
-                print(str(self.interprete_aux(sexp[1])))
+                print(self.interprete_aux(sexp[1]))
         elif sexp[0]["token"] == "set!":
             if sexp[1]["type"] != "sym":
                 raise Exception("Ln %d, Col %d: the type of %s should be symbol, not %s" %
@@ -256,16 +279,37 @@ class Intepreter:
                         break
                 
                 if not is_found:
-                    raise Exception("Ln %d, Col %d: the variable %s is not found!" % (sexp[1]["line"], sexp[1]["col"], sexp[1]["token"]))
+                    raise Exception("Ln %d, Col %d: the variable %s is not found!" %
+                            (sexp[1]["line"], sexp[1]["col"], sexp[1]["token"]))
+        
+        
+        elif sexp[0]["token"] == "def-syntax":
+            if len(sexp) < 3:
+                raise Exception("Ln %d, Col %d: def-syntax should have 2 or more arguments!" %
+                        (sexp[0]["line"], sexp[0]["col"]))
+            else:
+                syntax_name = sexp[1]["token"] # {"foo": {"before":[_ x y], "after":[+ x y]}, ...}
+                #removed_dict_form = self.remove_dict_form(sexp[2:])
 
+                result_list = []
                 
+                for i in sexp[2:]:
+                #for i in removed_dict_form:
+                    syntax_before = i[0]
+                    syntax_after = i[1]
+                    item = {"before": syntax_before, "after": syntax_after}
+                    result_list.append(item)
+                
+                self.macro_list[syntax_name] = result_list
+
         elif sexp[0]["token"] == "begin":
             if len(sexp) == 1:
                 raise Exception("Ln %d, Col %d: begin should have argument(s)!" %
                         (sexp[0]["line"], sexp[0]["col"]))
             else:
                 for i in sexp[1:]:
-                    self.interprete_aux(i)
+                    ret = self.interprete_aux(i)
+                return ret
         
         elif sexp[0]["token"] == "lambda":
             if not isinstance(sexp[1], list):
@@ -299,13 +343,59 @@ class Intepreter:
                 return ret
                 
 
-
+    def remove_dict_form(self, sexp):
+        if isinstance(sexp, list):
+            return [self.remove_dict_form(x) for x in sexp]
+        else:
+            return sexp["token"]
 
     def get_first_item(self, sexp):
         if isinstance(sexp, list):
             sexp = sexp[0]
 
         return sexp
+
+    def unify(self, sexp, before_stx, unification):
+        for i in range(len(before_stx)):
+            if isinstance(before_stx[i], list):
+                unification = unify(sexp[i], before_stx[i], unification)
+            elif before_stx[i]["token"] in unification.keys():
+                raise Exception("the variable %s is double defined." % before-stx[i])
+            elif re.match(r".+[.]{3}$", before_stx[i]["token"]):
+                if i == len(before_stx) - 1:
+                    unification[before_stx[i]["token"]] = {"content": sexp[i:], "dotted":True}
+                else:
+                    raise Exception("the variable %s is put in the wrong position." % before_stx[i])
+            else:
+                unification[before_stx[i]["token"]] = {"content": sexp[i], "dotted": False}
+        
+        return unification
+
+    def macro_expand(self, after_stx, unification):
+        if isinstance(after_stx, list):
+            raw_list = [self.macro_expand(i, unification) for i in after_stx]
+
+            result_list = []
+
+            for i in raw_list:
+                if isinstance(i, list):
+                    result_list.append(i)
+                elif "dotted" not in i.keys():
+                    result_list.append(i)
+                elif i["dotted"] == True:
+                    result_list += i["content"]
+                else:
+                    result_list.append(i["content"])
+            
+            return result_list
+
+        else:
+            if after_stx["token"] in unification.keys():
+                return unification[after_stx["token"]]
+            else:
+                return after_stx
+
+
 
 
 class Lambda:
@@ -319,8 +409,36 @@ class Lambda:
                 self.body = body
                 self.env = env
 
+
+
+
+
+'''test'''
+a = Parser()
+text = '''
+[def-syntax bar
+    [[_ x y] [+ x y]]
+    [[_ x y z...] [+ x [bar y z...]]]]
+
+[print[str[bar 156 6546 146514 10 6]]]
+
+[+[- 2 3][* 5.0 6]]
+[define var1 [+[- 2 3][* 5.0 6]]]
+[set! var1 [* 10 2]]
+[define foo [lambda [x y] [begin [+ x y][set! var1 10] 7]]]
+[foo 12 5]
+[print [+ var1 5]]
+'''
+
+"""text = '''[[[ 123 1.23 abc "\\123\\\"貓貓貓"] 我是貓，喵\[喵\]貓\%。喵喵%喵
+]]'''
+"""
+
 interp = Intepreter()
+
+a.get_clc_sexp(text)
 
 interp.interprete(a.parse_tree)
 
-
+#print(a.parse_tree)
+print(a.generate_printable_sexp(a.parse_tree))
