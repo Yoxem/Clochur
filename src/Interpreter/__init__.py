@@ -283,6 +283,14 @@ class Intepreter:
                         (sexp[0]["line"], sexp[0]["col"]))
             else:
                 return str(self.interprete_aux(sexp[1]))
+
+        elif sexp[0]["token"] == "str-append":
+            if len(sexp) != 3:
+                raise Exception("Ln %d, Col %d: the argument number of str should be 2" %
+                        (sexp[0]["line"], sexp[0]["col"]))
+            else:
+                return sexp[1] + sexp[2]
+
         elif sexp[0]["token"] == "print":
             if len(sexp) != 2:
                 raise Exception("Ln %d, Col %d: the argument number of print should be 1" %
@@ -459,6 +467,17 @@ text = '''
 
 """text = '''[[[ 123 1.23 abc "\\123\\\"貓貓貓"] 我是貓，喵\[喵\]貓\%。喵喵%喵
 ]]'''
+
+% TODO
+[def-syntax docu
+    [[_ x] [sile[docu_aux x]]]
+    [[_ x y...] [sile[docu_aux x y...]]]]
+
+[def-syntax docu_aux
+    [[_ x] [str x]]
+    [[_ [x...] [str [x...]]]]
+    [[_ x y...] [str-append[docu_aux x] [docu y...]]]]]
+
 """
 
 interp = Intepreter()
