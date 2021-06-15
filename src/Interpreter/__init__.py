@@ -1,6 +1,7 @@
 #-*-coding:utf-8-*-
 
 import re
+import xml.etree.ElementTree as ET
 
 class Parser():
 
@@ -158,21 +159,32 @@ class Intepreter:
         # environment
         self.env = [dict()] 
         self.macro_list = dict()
-
+        self.silexml = ET.Element('sile')
 
     def remove_spaces_and_newlines(self, sexp):
+        is_inside_defstx = False
+        return self.remove_spaces_and_newlines_aux(sexp, is_inside_defstx)
+
+    def remove_spaces_and_newlines_aux(self, sexp, is_inside_defstx):
         if isinstance(sexp, list):
-            if isinstance(sexp[0], dict) and sexp[0]["token"] == "docu":
+            result = []
+            if isinstance(sexp[0], dict) and sexp[0]["token"] == "def-syntax":
+                is_inside_defstx = True
+            if isinstance(sexp[0], dict) and sexp[0]["token"] == "docu" \
+                and is_inside_defstx == False:
                 result = []
                 for i in sexp[1:]:
-                    if i["type"] in ["space", "nl"]:
+                    if isinstance(i, list):
+                        result.append(self.remove_spaces_and_newlines_aux(i, is_inside_defstx))
+                    elif i["type"] in ["space", "nl"]:
                         result.append(i)
                     else:
-                        result.append(self.remove_spaces_and_newlines(i))
+                        result.append(self.remove_spaces_and_newlines_aux(i, is_inside_defstx))
 
-                    result = sexp[0] + result
+                result = sexp[0:1] + result
+
             else:
-                result = [self.remove_spaces_and_newlines(i)
+                result = [self.remove_spaces_and_newlines_aux(i, is_inside_defstx)
                             for i in sexp if not isinstance(i, dict) or (i["type"] not in ["space", "nl"])]
             return result
         else:
@@ -197,7 +209,7 @@ class Intepreter:
                         break
                 
                 if res == None:
-                    raise Exception("Ln %d, Col %d: the variable is not found!" % (sexp["line"], sexp["col"], sexp["token"]))
+                    raise Exception("Ln %d, Col %d: the variable %s is not found!" % (sexp["line"], sexp["col"], sexp["token"]))
                 else:
                     return res
 
@@ -243,7 +255,8 @@ class Intepreter:
                     syntax_after = i["after"]
                     is_found = True
                     break
-                elif len(i["before"]) < macro_len and re.match(r".+[.]{3}$", i["before"][-1]["token"]):
+                elif len(i["before"]) < macro_len and isinstance(i["before"][-1], dict) \
+                    and re.match(r".+[.]{3}$", i["before"][-1]["token"]):
                     unification = self.unify(sexp, i["before"], unification)
                     syntax_after = i["after"]
                     is_found = True
@@ -289,14 +302,15 @@ class Intepreter:
                 raise Exception("Ln %d, Col %d: the argument number of str should be 2" %
                         (sexp[0]["line"], sexp[0]["col"]))
             else:
-                return sexp[1] + sexp[2]
+                return self.interprete_aux(sexp[1]) + self.interprete_aux(sexp[2])
 
         elif sexp[0]["token"] == "print":
             if len(sexp) != 2:
                 raise Exception("Ln %d, Col %d: the argument number of print should be 1" %
                         (sexp[0]["line"], sexp[0]["col"]))
             else:
-                print(self.interprete_aux(sexp[1]))
+                result = self.interprete_aux(sexp[1])
+                print(result)
         elif sexp[0]["token"] == "set!":
             if sexp[1]["type"] != "sym":
                 raise Exception("Ln %d, Col %d: the type of %s should be symbol, not %s" %
@@ -348,6 +362,11 @@ class Intepreter:
                         (sexp[1]["line"], sexp[1]["col"], sexp[1]))
             else:
                 return Lambda(sexp[1], sexp[2], self.env)
+        
+        elif sexp[0]["token"] == "SILE":
+            self.silexml.text = self.interprete_aux(sexp[1])
+            return ET.tostring(self.silexml, encoding="unicode")
+
         else:
             sexp_new = [self.interprete_aux(x) for x in sexp]
             
@@ -451,18 +470,30 @@ text = '''
     [[_ x y] [+ x y]]
     [[_ x y z...] [+ x [bar y z...]]]]
 
-[print[str[bar 156 6546 146514 10 6]]]
+%[print[str[bar 156 6546 146514 10 6]]]
 
 [define fac [lambda [x] [if [= x 1] 1 [*  x  [fac [- x 1]]]]]]
 
-[print [fac 6]]
+%[print [fac 6]]
 
 [+[- 2 3][* 5.0 6]]
 [define var1 [+[- 2 3][* 5.0 6]]]
 [set! var1 [* 10 2]]
 [define foo [lambda [x y] [begin [+ x y][set! var1 10] 7]]]
 [foo 12 5]
-[print [+ var1 5]]
+%[print [+ var1 5]]
+
+[def-syntax docu
+    [[_ x] [SILE[docu_aux x]]]
+    [[_ x y...] [SILE[docu_aux x y...]]]]
+
+[def-syntax docu_aux
+    [[_ x] [str x]]
+    [[_ [x...]] [str [x...]]]
+    [[_ x y...] [str-append[docu_aux x] [docu_aux y...]]]]
+
+[print [docu 貓]]
+[print[docu 我是貓 [+ 12 3]，還沒有名字。]]
 '''
 
 """text = '''[[[ 123 1.23 abc "\\123\\\"貓貓貓"] 我是貓，喵\[喵\]貓\%。喵喵%喵
@@ -470,13 +501,13 @@ text = '''
 
 % TODO
 [def-syntax docu
-    [[_ x] [sile[docu_aux x]]]
-    [[_ x y...] [sile[docu_aux x y...]]]]
+    [[_ @ para x] [SILE[docu_aux x]]]
+    [[_ @ para x y...] [SILE[docu_aux x y...]]]]
 
 [def-syntax docu_aux
     [[_ x] [str x]]
     [[_ [x...] [str [x...]]]]
-    [[_ x y...] [str-append[docu_aux x] [docu y...]]]]]
+    [[_ x y...] [str-append[docu_aux x] [docu_aux y...]]]]]
 
 """
 
