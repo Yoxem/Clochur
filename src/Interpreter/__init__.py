@@ -363,6 +363,9 @@ class Intepreter:
             else:
                 return Lambda(sexp[1], sexp[2], self.env)
         
+        # TODO: SILE argument:
+        #
+        # [docu-para [["pagesize" "a4"]]
         elif sexp[0]["token"] == "SILE":
             self.silexml.text = self.interprete_aux(sexp[1])
             return ET.tostring(self.silexml, encoding="unicode")
