@@ -1,0 +1,17 @@
+[docu [call font [[family "AR PL UMing TW"]] 123]
+
+[call font [[family "AR PL UMing TW"]] 123]
+456
+[call font [[family "AR PL UMing TW"]] "789漢字"]
+
+\[7 8 9 \] = \[[+ 5 2] 8 9\]
+
+[call font [[family "AR PL UMing TW"]] 巨集轉換]
+
+\[def-syntax foo \[\[_ x \] \[* x x\]\]\]
+
+[def-syntax foo [[_ x][* x x]]]
+
+8 * 8 = [foo 8]
+
+]

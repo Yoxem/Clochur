@@ -3,14 +3,17 @@ import pdb  # 先 import 今天要介紹的套件
 
 from glob import glob
 from setuptools import find_packages, setup
-from src.Editor import __about__
+
+about = {}
+with open("./src/Editor/__about__.py") as about_info:
+    exec(about_info.read(), about)
 
 third_party_files_and_dir = glob('thirdparty/**',recursive=True)
 third_party_files = [x for x in third_party_files_and_dir if not os.path.isdir(x)]
 
 setup(
     name="Clochur",
-    version=__about__.version_no,
+    version=about['version_no'],
     author="Yoxem Chen",
     author_email="yoxem.tem98@nctu.edu.tw",
     description='''A S-expression like typesetting language powered by SILE engine
@@ -41,7 +44,7 @@ setup(
     },
 
 	packages=find_packages(where='src'),
-    package_dir={'Editor': 'src/Editor'},
+    package_dir={'Editor': 'src/Editor', 'Interpreter': 'src/Interpreter'},
     package_data={'Editor': ['*.pdf', '*.qrc',
                              '../resources/*.svg',
 							 '../thirdparty/pdfjs/**',
@@ -53,3 +56,7 @@ setup(
 
 
 )
+
+
+
+

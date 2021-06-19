@@ -4,19 +4,26 @@
 import json
 import os
 import sys
+import time
+import subprocess
+import shutil
+
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5 import QtWebEngineWidgets
 from PyQt5.QtWidgets import *
 from PyQt5.Qsci import QsciScintilla
 
-from . import qrc_resources
-from . import FindReplace, CustomQsciEditor
+import qrc_resources
 
-from . import __about__
+import __about__
+import FindReplace
+from Interpreter import Interpreter, Lambda
+import CustomQsciEditor
+from Parser import Parser
 
-filename = None
 
+sile_command = 'sile'
 
 dirname = os.path.abspath(os.path.dirname(__file__)) #os.path.dirname('__file__')
 PDFJS = os.path.join(dirname, '../thirdparty/pdfjs/web/viewer.html')
@@ -30,7 +37,9 @@ class PDFJSWidget(QtWebEngineWidgets.QWebEngineView):
     def __init__(self):
         super(PDFJSWidget, self).__init__()
         self.load(QUrl.fromUserInput("file://%s?file=file://%s"  % (PDFJS, PDF)))
-        print((dirname,PDFJS, PDF))
+        #print((dirname,PDFJS, PDF))
+    def load_path(self, path):
+        self.load(QUrl.fromUserInput("file://%s?file=file://%s"  % (PDFJS, path)))
 
 
 
@@ -45,6 +54,7 @@ class Window(QMainWindow):
 
         self.tmp_folder = '/tmp'
         self.tmp_file = 'clochur_tmp.json'
+        self.tmp_output_file = str(hex(hash(int(time.time()))))[2:] # e1f513545c => e1f513545c.pdf, e1f513545c.s
         self.untitled_id = None
 
         self.opened_file_dirname = os.path.expanduser("~")
@@ -71,6 +81,10 @@ class Window(QMainWindow):
 
         self.save_as_action = QAction(QIcon(":save-as.svg"), "Save as...", self)
         self.save_as_action.triggered.connect(self.save_as_call)
+
+        self.save_pdf_action = QAction(QIcon(":pdf.svg"), "Save &PDF", self)
+        self.save_pdf_action.setShortcut('Ctrl+P')
+        self.save_pdf_action.triggered.connect(self.save_pdf_call)
 
         self.exit_action = QAction("&Exit", self)
         self.exit_action.setShortcut('Ctrl+Q')
@@ -105,7 +119,9 @@ class Window(QMainWindow):
         self.select_all_action.triggered.connect(self.select_all_call)
 
 
-        self.convert_action = QAction(QIcon(":convert.svg"), "Con&vert", self)
+        self.convert_action = QAction(QIcon(":convert.svg"), "Conv&ert", self)
+        self.convert_action.setShortcut('Ctrl+E')
+        self.convert_action.triggered.connect(self.convert_call)
 
         self.about_action = QAction("&About", self)
         self.about_action.triggered.connect(self.about_call)       
@@ -121,8 +137,14 @@ class Window(QMainWindow):
         file_menu = menuBar.addMenu("&File")
         file_menu.addAction(self.new_action)
         file_menu.addAction(self.open_action)
+        file_menu.addSeparator()
+
+
         file_menu.addAction(self.save_action)
         file_menu.addAction(self.save_as_action)
+        file_menu.addAction(self.save_pdf_action)
+        file_menu.addSeparator()
+
         file_menu.addAction(self.exit_action)
 
         edit_menu = menuBar.addMenu("&Edit")
@@ -207,7 +229,7 @@ class Window(QMainWindow):
             self.filename = os.path.basename(file_path[0])
             self.opened_file_dirname = os.path.dirname(file_path[0])
             self.file = open(file_path[0], 'w', encoding='utf-8')
-            file_content = editor.text()
+            file_content = self.editor.text()
             self.file.write(file_content)
             self.file.close()    
 
@@ -217,6 +239,45 @@ class Window(QMainWindow):
 
             self.setWindowTitle("Clochur - %s" % os.path.basename(file_path[0]))
         pass
+
+    def save_pdf_call(self):
+        dest_pdf_path = QFileDialog.getSaveFileName(self, 'Save pdf as...', self.opened_file_dirname, "Porfable document format (*.pdf)")
+        if dest_pdf_path[0] != '':
+            self.convert_call()
+            sile_pdf_path = os.path.join(self.tmp_folder, self.tmp_output_file+".pdf")
+            shutil.copyfile(sile_pdf_path, dest_pdf_path[0])
+               
+
+        pass
+
+    def convert_call(self):
+        text = self.editor.text()
+
+        parser = Parser()
+        try:
+            parse_tree = parser.get_clc_sexp(text)
+            intepreter = Interpreter()
+            result = intepreter.interprete(parse_tree)
+
+            sile_xml_path = os.path.join(self.tmp_folder, self.tmp_output_file+".xml")
+            sile_pdf_path = os.path.join(self.tmp_folder, self.tmp_output_file+".pdf")
+
+            with open(sile_xml_path, "w") as xml:
+                xml.write(result)
+                xml.close()
+
+            subprocess.run([sile_command, sile_xml_path])
+            pdf_js_webviewer_list = self.findChildren(QtWebEngineWidgets.QWebEngineView)
+            pdf_js_webviewer = pdf_js_webviewer_list[-1]
+            pdf_js_webviewer.load_path(sile_pdf_path)
+            
+        except Exception as e:
+            error_message = QErrorMessage()
+            error_message.showMessage(str(e))
+            error_message.exec_()
+
+
+
 
     def exit_call(self):
         
@@ -235,12 +296,14 @@ class Window(QMainWindow):
 
             elif reply == QMessageBox.No:
                 self.removing_untitled_id()
+                self.remove_tmp_outputs() 
                 app.exit()
             else:
                 pass
 
         else:
             self.removing_untitled_id()
+            self.remove_tmp_outputs()
             app.exit()
 
     def undo_call(self):
@@ -259,7 +322,7 @@ class Window(QMainWindow):
         self.editor.cut()
 
     def find_and_replace_call(self):
-        print(FindReplace)
+        #print(FindReplace)
         find_replace_dialog = FindReplace.FindReplace(self)
         type(find_replace_dialog)
         find_replace_dialog.exec_()
@@ -280,8 +343,11 @@ class Window(QMainWindow):
 
         editToolBar.addAction(self.new_action)
         editToolBar.addAction(self.open_action)
+        tool_bar_separator = editToolBar.addAction('|')
         editToolBar.addAction(self.save_action)
         editToolBar.addAction(self.save_as_action)
+        editToolBar.addAction(self.save_pdf_action)
+
 
 
         tool_bar_separator = editToolBar.addAction('|')
@@ -357,6 +423,16 @@ class Window(QMainWindow):
                 self.untitled_id = i
 
         return "Untitled %d" % self.untitled_id
+    
+    def remove_tmp_outputs(self):
+        
+        sile_xml_path = os.path.join(self.tmp_folder, self.tmp_output_file+".xml")
+        sile_pdf_path = os.path.join(self.tmp_folder, self.tmp_output_file+".pdf")
+        if os.path.isfile(sile_xml_path):
+            os.remove(sile_xml_path)
+        
+        if os.path.isfile(sile_pdf_path):
+            os.remove(sile_pdf_path)
             
 
 
@@ -407,3 +483,5 @@ def entry_point():
     window.show()
 
     sys.exit(app.exec_())
+
+entry_point()

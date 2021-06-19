@@ -4,6 +4,8 @@
 import re
 from PyQt5.Qsci import QsciLexerCustom, QsciScintilla
 from PyQt5.QtGui import *
+from Parser import Parser
+
 
 
 
@@ -15,23 +17,25 @@ class ClochurLexer(QsciLexerCustom):
             0: 'Default',
             1: 'Keyword',
             2: 'Comment',
-            3: 'String',
-            4: 'Rainbow0',
-            5: 'Rainbow1',
-            6: 'Rainbow2',
-            7: 'Rainbow3',
-            8: 'Rainbow4',
-            9: 'Rainbow5',
-            10: 'Rainbow6',
+            3: 'Number',
+            4: 'String',
+            5: 'Rainbow0',
+            6: 'Rainbow1',
+            7: 'Rainbow2',
+            8: 'Rainbow3',
+            9: 'Rainbow4',
+            10: 'Rainbow5',
+            11: 'Rainbow6',
         }
 
         for (k,v) in self._styles.items():
             setattr(self, v, k)
 
-        self.QUOTES = ['"', "'"]
+        self.QUOTES = ['"']
         self.PARENTHESIS = ["[", "]"]
 
-        self.PRIMARY = ['define', 'let' , '#t', '#f', 'lambda', '@', 'cond', 'if', 'docu']
+        self.PRIMARY = ['define', 'def-syntax' , 'True', 'False', 'lambda', '-', '+',
+            '*', '/', '>' ,'=','<','>=','<=', 'if', 'docu', 'font', 'font-family']
 
         self.split_pattern = re.compile(r'(\s+|\\%|%|\\\[|\\\]|[[]|[]])')
 
@@ -57,7 +61,9 @@ class ClochurLexer(QsciLexerCustom):
         elif style == self.Keyword:
             return QColor("#0000ff")
         elif style == self.Comment:
-            return QColor("#005500")
+            return QColor("#85cf65")
+        elif style == self.Number:
+            return QColor("#00aaff")
         elif style == self.String:
             return QColor("#ce5c00")
         elif style == self.Rainbow0:
@@ -122,6 +128,7 @@ class ClochurLexer(QsciLexerCustom):
             #print(line_utf8_splitted_len_pair)
 
             is_comment = False
+            is_string = False
 
             i = 0
             if index > 0:
@@ -129,7 +136,10 @@ class ClochurLexer(QsciLexerCustom):
                 rainbow_state = SCI(QsciScintilla.SCI_GETLINESTATE, index - 1)
             #    print(rainbow_state)
 
+            tmp_parser = Parser()
+
             for item in line_utf8_splitted_len_pair:
+
 
                 '''comment'''
                 if item["str"] == "%":
@@ -138,9 +148,25 @@ class ClochurLexer(QsciLexerCustom):
                     new_state = self.Comment # end of comment
                 elif item["str"] in self.PRIMARY: # keywords
                     new_state = self.Keyword
+
+                # number
+                elif re.match(tmp_parser.int_pattern,item["str"]):
+                    new_state = self.Number
+                elif re.match(tmp_parser.float_pattern, item["str"]):
+                    new_state = self.Number
+                
                 # string
-                elif re.match(r'^["]([^"]|\\\")*["]$' ,item["str"]) or re.match(r"^[']([^']|\\\')*[']$" ,item["str"]):
+                elif re.match(tmp_parser.string_pattern ,item["str"]):
                     new_state = self.String
+                elif re.match(r"[\"]([^\"\\]|[\\][\"\n\t]|[\\])*?", item["str"]):
+                    is_string = True
+                    new_state = self.String
+                elif re.match(r"([^\"\\]|[\\][\"\n\t]|[\\])*?[\"]" ,item["str"]):
+                    new_state = self.String
+                    is_string = False
+                elif is_string == True:
+                    new_state = self.String
+
                 #parenthesis: rainbow mode
                 elif item["str"] == "[":
                     new_state = getattr(self, "Rainbow" + str(rainbow_state))
