@@ -4,7 +4,7 @@
 import re
 from PyQt5.Qsci import QsciLexerCustom, QsciScintilla
 from PyQt5.QtGui import *
-from Parser import Parser
+from Editor.Parser import Parser
 
 
 

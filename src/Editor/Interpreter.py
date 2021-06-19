@@ -2,7 +2,7 @@
 
 import re
 import xml.etree.ElementTree as ET
-from Parser import Parser
+from Editor.Parser import Parser
 
 '''
 macro expansion for example:

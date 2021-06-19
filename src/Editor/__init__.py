@@ -14,13 +14,13 @@ from PyQt5 import QtWebEngineWidgets
 from PyQt5.QtWidgets import *
 from PyQt5.Qsci import QsciScintilla
 
-import qrc_resources
+from Editor import qrc_resources
 
-import __about__
-import FindReplace
-from Interpreter import Interpreter, Lambda
-import CustomQsciEditor
-from Parser import Parser
+from Editor import __about__
+from Editor import FindReplace
+from Editor.Interpreter import Interpreter, Lambda
+from Editor import CustomQsciEditor
+from Editor.Parser import Parser
 
 
 sile_command = 'sile'
