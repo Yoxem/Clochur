@@ -44,7 +44,7 @@ setup(
     },
 
 	packages=find_packages(where='src'),
-    package_dir={'Editor': 'src/Editor', 'Interpreter': 'src/Interpreter'},
+    package_dir={'Editor': 'src/Editor'},
     package_data={'Editor': ['*.pdf', '*.qrc',
                              '../resources/*.svg',
 							 '../thirdparty/pdfjs/**',

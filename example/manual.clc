@@ -1,0 +1,31 @@
+[def-syntax q [[_] [str "\""]]]
+[script "packages/font-fallback"]
+[script "packages/grid"]
+
+
+
+[docu-para [[class "book"][papersize "b5"]]]
+[docu
+[call grid [[spacing "15pt"]]]
+[call font:add-fallback [[family "Noto Serif CJK TC"]]]
+[font-size "30pt" "Huan-gîng 使用 Clochur!"]
+
+[font-size "20pt" "Welcome to use"] [font [[family "sligeach_orig"][size "20pt"]] "Clóċur"][font-size "20pt" ", a toy editor, toy intepreter and a toy typesetting-engine frontend."]
+
+[call section "What is Clochur?"]
+
+Clochur, or printed as [str "\""][font-family "sligeach_orig" "Clóċur" ][str "\""] in Irish language (Clóċur as Roman type, which means [q]typesetting[q]), is a toy-lisp typesetting language with a intepreter written in Python, and with a simple Editor written in PyQt and Qscintilla.
+
+It generate a XML that is readable for SILE, which is a typesetting engine written in Lua,
+and it generate PDF with SILE.
+
+The functions that it has (although may be buggy or needed to be tested) is:
+
+ - Macro expansion.
+
+ - call SILE command.
+
+ - count basic arithmetic expression.
+
+[str "- lambda function"], function definition.
+]
