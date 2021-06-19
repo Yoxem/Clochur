@@ -194,7 +194,7 @@ class Window(QMainWindow):
             self.filename = os.path.basename(file_path[0])
             self.opened_file_dirname = os.path.dirname(file_path[0])
             self.file = open(file_path[0], 'r', encoding='utf-8')
-            editor.setText(self.file.read())
+            self.editor.setText(self.file.read())
             self.file.close()
 
 
@@ -428,11 +428,16 @@ class Window(QMainWindow):
         
         sile_xml_path = os.path.join(self.tmp_folder, self.tmp_output_file+".xml")
         sile_pdf_path = os.path.join(self.tmp_folder, self.tmp_output_file+".pdf")
+        sile_toc_path = os.path.join(self.tmp_folder, self.tmp_output_file+".toc")
+
         if os.path.isfile(sile_xml_path):
             os.remove(sile_xml_path)
         
         if os.path.isfile(sile_pdf_path):
             os.remove(sile_pdf_path)
+        
+        if os.path.isfile(sile_toc_path):
+            os.remove(sile_toc_path)
             
 
 
