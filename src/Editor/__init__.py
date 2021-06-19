@@ -19,7 +19,7 @@ from Editor import qrc_resources
 from Editor import __about__
 from Editor import FindReplace
 from Editor.Interpreter import Interpreter, Lambda
-from Editor import CustomQsciEditor
+from Editorimport CustomQsciEditor
 from Editor.Parser import Parser
 
 
@@ -27,7 +27,7 @@ sile_command = 'sile'
 
 dirname = os.path.abspath(os.path.dirname(__file__)) #os.path.dirname('__file__')
 PDFJS = os.path.join(dirname, '../thirdparty/pdfjs/web/viewer.html')
-PDF = os.path.join(dirname, 'example.pdf')
+PDF = os.path.join(os.path.dirname(dirname), 'example.pdf')
 
 app = None
 

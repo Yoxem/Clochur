@@ -1,13 +1,29 @@
 # Clochur
 A Scheme-like typesetting LISP interpreter and editor that using SILE typesetting Engine.
 
-== Packaging ==
 
-To make a wheel package, run:
+## Dependencies
+* PyQt5>=5.15
+* QScintilla>=2.12
+* SILE>=0.10
 
-  python setup.py bdist_wheel
+## Install
+It's recommended to install the wheel file (.whl) of it with pip3:
+
+  `pip3 install Clochur-x.y.z-py3-none-any.whl`
+
+## Manual
+
+see `src/example.pdf`
+
+## Packaging
+
+To make a wheel package, run the following command in the root folder:
+
+  `python setup.py bdist_wheel`
 
 and then:
 
-  cd dist
-  pip3 install Clochur-x.y.z-py3-none-any.whl
+  `cd dist; ls`
+
+`Clochur-x.y.z-py3-none-any.whl` will in it.
