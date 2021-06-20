@@ -2,7 +2,8 @@
 
 import re
 import xml.etree.ElementTree as ET
-from Editor.Parser import Parser
+import itertools
+from Clochur.Parser import Parser
 
 '''
 macro expansion for example:
@@ -20,6 +21,11 @@ class Interpreter:
         self.env = [dict()] 
         self.macro_list = dict()
         self.silexml = ET.Element('sile')
+
+        #self.editor = None
+
+        #if "editor" in kwargs.keys():
+        #    self.editor = kwargs["editor"]
 
         self.preprocessing_commands = '''[def-syntax docu
     [[_ x] [SILE[docu-aux x]]]
@@ -103,9 +109,11 @@ class Interpreter:
             string = str(string)
         if re.match(string_pattern, string):
             # reverse the escape characters
-            print(string)
-            string = re.sub(r'\\"(.+)',r'"\1',string)
-            print(string)
+            while True:
+                string_before = string
+                string = re.sub(r'\\"(.+)',r'"\1',string)
+                if string_before == string:
+                    break
             return string[1:-1]
         else:
             return string
@@ -153,10 +161,26 @@ class Interpreter:
 
             else:
                 return sexp["token"]
+        
+        elif isinstance(sexp, Lambda):
+            return sexp
+        
+        # lambda apply
+        elif isinstance(sexp[0], Lambda):
+            return self.apply(sexp)
+
+        # count sexp[0] first.
+        elif isinstance(sexp[0], list):
+            new_sexp_0 = self.interprete_aux(sexp[0])
+            new_sexp = [new_sexp_0] + sexp[1:]
+            return self.interprete_aux(new_sexp)
+        
+
         elif sexp[0]["token"] in ["+", "-", "*", "/", "<", "=", ">", "<=", ">="]:
             if len(sexp) != 3:
+                parser = Parser()
                 raise Exception("Ln %d, Col %d: the argument length %d of %s is not correct." %
-                        (sexp[0]["line"], sexp[0]["col"], len(sexp), a.generate_printable_sexp(sexp)))
+                        (sexp[0]["line"], sexp[0]["col"], len(sexp), parser.generate_printable_sexp(sexp)))
             else:
                 if sexp[0]["token"] == "+":
                     return self.interprete_aux(sexp[1]) + self.interprete_aux(sexp[2])
@@ -203,7 +227,8 @@ class Interpreter:
                     pass
             
             if not is_found:
-                raise Exception("The syntax pattern for %s is not found." % a.generate_printable_sexp(sexp))
+                parser = Parser()
+                raise Exception("The syntax pattern for %s is not found." % parser.generate_printable_sexp(sexp))
             else:
                 new_sexp = self.macro_expand(syntax_after, unification)
                 
@@ -216,8 +241,14 @@ class Interpreter:
             if sexp[1]["type"] != "sym":
                 raise Exception("Ln %d, Col %d: the type of %s should be symbol, not %s" %
                         (sexp[1]["line"], sexp[1]["col"], sexp[1], sexp[1]["type"]))
-            else:        
-                self.env[-1][sexp[1]["token"]] = self.interprete_aux(sexp[2])
+            else:
+                defined_var = sexp[1]["token"]   
+                self.env[-1][defined_var] = self.interprete_aux(sexp[2])
+                
+                #if self.editor != None:
+                #    self.editor.append_autocompletion_item(defined_var)
+            return ""
+            
         elif sexp[0]["token"] == "if":
             if len(sexp) != 4:
                 raise Exception("Ln %d, Col %d: the number of argument of if should be 3." %
@@ -233,7 +264,12 @@ class Interpreter:
                 raise Exception("Ln %d, Col %d: the argument number of str should be 1" %
                         (sexp[0]["line"], sexp[0]["col"]))
             else:
-                if isinstance(sexp[1], dict) and (not (sexp[1]["token"] in self.macro_list.keys())):
+                vars_frame = [frame.keys() for frame in self.env]
+                vars_list = list(itertools.chain.from_iterable(vars_frame))
+                macro_vars = self.macro_list.keys()
+                if isinstance(sexp[1], dict) and \
+                    (not (sexp[1]["token"] in macro_vars)) and \
+                    (not (sexp[1]["token"] in vars_list)) :
                     return str(self.destring(sexp[1]["token"]))
                 else:
                     return str(self.destring(self.interprete_aux(sexp[1])))
@@ -253,6 +289,14 @@ class Interpreter:
                 result = self.interprete_aux(sexp[1])
                 print(result)
                 return ""
+        elif sexp[0]["token"] == 'eval':
+            if len(sexp) != 2:
+                raise Exception("Ln %d, Col %d: the argument number of eval should be 1" %
+                        (sexp[0]["line"], sexp[0]["col"]))
+            else:
+                result = self.interprete_aux(sexp[1])
+                return result
+        
         elif sexp[0]["token"] == "set!":
             if sexp[1]["type"] != "sym":
                 raise Exception("Ln %d, Col %d: the type of %s should be symbol, not %s" %
@@ -268,6 +312,8 @@ class Interpreter:
                 if not is_found:
                     raise Exception("Ln %d, Col %d: the variable %s is not found!" %
                             (sexp[1]["line"], sexp[1]["col"], sexp[1]["token"]))
+
+            return ""
         
         
         elif sexp[0]["token"] == "def-syntax":
@@ -288,6 +334,10 @@ class Interpreter:
                     result_list.append(item)
                 
                 self.macro_list[syntax_name] = result_list
+
+                # add to auto completion list
+                #if self.editor != None:
+                #    self.editor.append_autocompletion_item(defined_var)
 
             return ""
 
@@ -351,6 +401,58 @@ class Interpreter:
             else:
                 raise Exception("Line %d, Col. %d, the form of call is mal-formed." % (sexp[0]["line"], sexp[0]["col"]))
         
+        # make a List class object
+        elif sexp[0]["token"] == "ls":
+            result = []
+
+            if len(sexp) == 1:
+                return result
+            else:
+                result = [self.interprete_aux(x) for x in sexp[1:]]
+
+            return List(result)
+
+        # (car List)
+        elif sexp[0]["token"] == "car":
+            if len(sexp) != 2:
+                raise Exception("Line %d, Col. %d, the argument length should be 1" % (sexp[0]["line"], sexp[0]["col"]))
+            elif not isinstance(sexp[1], List):
+                raise Exception("Line %d, Col. %d, the argument is not a list." % (sexp[1]["line"], sexp[1]["col"]))
+            else:
+                ls = sexp[1].ls
+                return ls[0]
+
+        # (cdr List)
+        elif sexp[0]["token"] == "cdr":
+            if len(sexp) != 2:
+                raise Exception("Line %d, Col. %d, the argument length should be 1" % (sexp[0]["line"], sexp[0]["col"]))
+            elif not isinstance(sexp[1], List):
+                raise Exception("Line %d, Col. %d, the argument is not a list." % (sexp[1]["line"], sexp[1]["col"]))
+            else:
+                ls = sexp[1].ls
+                return ls[1:]
+
+        # (cons any List)
+        elif sexp[0]["token"] == "cons":
+            if len(sexp) != 3:
+                raise Exception("Line %d, Col. %d, the argument length should be 2" % (sexp[0]["line"], sexp[0]["col"]))
+            elif not isinstance(sexp[2], List):
+                raise Exception("Line %d, Col. %d, the 2nd argument of cons is not a list." % (sexp[2]["line"], sexp[2]["col"]))
+            else:
+                car = sexp[1]
+                cdr = sexp[2].ls
+                result_ls = List([sexp[1]]+cdr)
+                return result_ls
+        
+
+        elif sexp[0]["token"] == "ls-ref":
+            if len(sexp) != 3:
+                raise Exception("Line %d, Col. %d, the argument length should be 1" % (sexp[0]["line"], sexp[0]["col"]))
+            elif not isinstance(sexp[1], List):
+                raise Exception("Line %d, Col. %d, the 2nd argument of cons is not a list." % (sexp[2]["line"], sexp[2]["col"]))
+
+
+        
         # if it's a sub-xml-element, show the string form of it, or return the input unchanged.
         # It's recommended to use it only print it in terminal with 'print'
         elif sexp[0]["token"] == "xml-to-string":
@@ -384,29 +486,34 @@ class Interpreter:
             return ET.tostring(self.silexml, encoding="unicode")
 
         else:
-            sexp_new = [self.interprete_aux(x) for x in sexp]
+            ret = self.apply(sexp)
+            return ret
+
+    def apply(self, sexp):
             
-            if isinstance(sexp_new[0], Lambda):
-                vars = sexp_new[0].vars
-                env = sexp_new[0].env
-                body = sexp_new[0].body
-                vars_input = sexp_new[1:]
+        sexp_new = [self.interprete_aux(x) for x in sexp]
+            
+        if isinstance(sexp_new[0], Lambda):
+            vars = sexp_new[0].vars
+            env = sexp_new[0].env
+            body = sexp_new[0].body
+            vars_input = sexp_new[1:]
 
-                if len(vars) != len(vars_input):
-                    raise Exception("Ln %d, Col %d: argument length is not matched." %
-                        (self.get_first_item(sexp[0])["line"], self.get_first_item(sexp[0])["col"]))
+            if len(vars) != len(vars_input):
+                raise Exception("Ln %d, Col %d: argument length is not matched." %
+                    (self.get_first_item(sexp[0])["line"], self.get_first_item(sexp[0])["col"]))
                 
-                new_env_block = dict()
-                for i in range(len(vars)):
-                    new_env_block[vars[i]] = vars_input[i]
+            new_env_block = dict()
+            for i in range(len(vars)):
+                new_env_block[vars[i]] = vars_input[i]
                 
-                new_env = [new_env_block] + env
+            new_env = [new_env_block] + env
 
-                old_env = self.env
-                self.env = new_env
-                ret = self.interprete_aux(body)
-                self.env = old_env
-                return ret
+            old_env = self.env
+            self.env = new_env
+            ret = self.interprete_aux(body)
+            self.env = old_env
+            return ret
                 
 
     def remove_dict_form(self, sexp):
@@ -426,7 +533,7 @@ class Interpreter:
             if isinstance(before_stx[i], list):
                 unification = self.unify(sexp[i], before_stx[i], unification)
             elif before_stx[i]["token"] in unification.keys():
-                raise Exception("the variable %s is double defined." % before-stx[i])
+                raise Exception("the variable %s is double defined." % before_stx[i])
             elif re.match(r".+[.]{3}$", before_stx[i]["token"]):
                 if i == len(before_stx) - 1:
                     unification[before_stx[i]["token"]] = {"content": sexp[i:], "dotted":True}
@@ -467,8 +574,14 @@ class SubXMLElement:
     def __init__(self, element):
         self.element = element
     
-    def __str__(init):
+    def __str__(self):
         return ""
+
+# closure
+class List:
+    def __init__(self, ls):
+        self.ls = ls
+
 # closure
 class Lambda:
     def __init__(self, vars, body, env):

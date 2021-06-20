@@ -14,13 +14,17 @@ from PyQt5 import QtWebEngineWidgets
 from PyQt5.QtWidgets import *
 from PyQt5.Qsci import QsciScintilla
 
-from Editor import qrc_resources
+src_dirname = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
+sys.path.append(src_dirname)
 
-from Editor import __about__
-from Editor import FindReplace
-from Editor.Interpreter import Interpreter, Lambda
-from Editorimport CustomQsciEditor
-from Editor.Parser import Parser
+
+from Clochur import qrc_resources
+
+from Clochur import __about__
+from Clochur import FindReplace
+from Clochur.Interpreter import Interpreter, Lambda
+from Clochur import CustomQsciEditor
+from Clochur.Parser import Parser
 
 
 sile_command = 'sile'
@@ -175,7 +179,6 @@ class Window(QMainWindow):
         format_menu = menuBar.addMenu("&Format")
         format_menu.addAction(self.bold_action)
         format_menu.addAction(self.italic_action)
-        format_menu.addAction(self.strike_action)
         format_menu.addAction(self.underline_action)
 
         help_menu = menuBar.addMenu("&Help")
@@ -195,7 +198,11 @@ class Window(QMainWindow):
             self.opened_file_dirname = os.path.dirname(file_path[0])
             self.file = open(file_path[0], 'r', encoding='utf-8')
             self.editor.setText(self.file.read())
+            self.setWindowTitle("Clochur - %s" % self.filename)
+            self.editor.setModified(False)
             self.file.close()
+        else:
+            pass
 
 
 
@@ -207,7 +214,7 @@ class Window(QMainWindow):
             
         else:
             self.file = open(os.path.join(self.opened_file_dirname,self.filename), 'w', encoding='utf-8')
-            file_content = editor.text()
+            file_content = self.editor.text()
             self.file.write(file_content)
             self.file.close()
             
@@ -218,6 +225,7 @@ class Window(QMainWindow):
                 with open(os.path.join(self.tmp_folder, self.tmp_file), 'r') as f:
                     data = json.load(f)
                     data["untitled"].remove(self.untitled_id)
+                    self.untitled_id = None
                 
                 with open(os.path.join(self.tmp_folder, self.tmp_file), 'w') as f:
                     json.dump(data, f, indent=4)
@@ -286,13 +294,17 @@ class Window(QMainWindow):
         if self.editor.isModified():
             reply = QMessageBox.question(self,'','Do You want to save this file? The text has been modified', QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel, QMessageBox.No)
             if reply == QMessageBox.Yes:
-                file_path = QFileDialog.getSaveFileName(self, 'Save file as...', self.opened_file_dirname, "CLC typesetting format (*.clc)")
-                if file_path[0] != '':
-                    self.file = open(file_path[0], 'w', encoding='utf-8')
-                    file_content = editor.text()
-                    self.file.write(file_content)
-                    self.file.close()
-                    self.removing_untitled_id()
+                if self.filename !=  None:
+                    self.save_call()
+                else:
+
+                    file_path = QFileDialog.getSaveFileName(self, 'Save file as...', self.opened_file_dirname, "CLC typesetting format (*.clc)")
+                    if file_path[0] != '':
+                        self.file = open(file_path[0], 'w', encoding='utf-8')
+                        file_content = self.editor.text()
+                        self.file.write(file_content)
+                        self.file.close()
+                        self.removing_untitled_id()
 
             elif reply == QMessageBox.No:
                 self.removing_untitled_id()
@@ -378,7 +390,6 @@ class Window(QMainWindow):
 
         formatToolBar.addAction(self.bold_action)
         formatToolBar.addAction(self.italic_action)
-        formatToolBar.addAction(self.strike_action)
         formatToolBar.addAction(self.underline_action)
 
         '''create font adder'''

@@ -6,7 +6,7 @@ class Parser():
         bool_pattern = r"(?P<bool>True|False)"
         int_pattern  =r"(?P<int>[+-]?\d+)"
         symbol_pattern = r"(?P<sym>[_a-zA-Z][-!:._0-9a-zA-Z]*)"
-        string_pattern = r"(?P<str>[\"]([^\"\\]|[\\][\\\"\n\t]|[\\])*?[\"])"
+        string_pattern = r"(?P<str>[\"]([^\"\\]|[\\][\\\"nt]|[\\])*?[\"])"
         parenthesis_pattern = r"(?P<paren>[[]|[]])"
         percent_pattern = r"(?P<percent>[%])"
         space_pattern  = r"(?P<space>[ \t]+)"

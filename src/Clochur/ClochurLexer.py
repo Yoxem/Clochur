@@ -4,7 +4,7 @@
 import re
 from PyQt5.Qsci import QsciLexerCustom, QsciScintilla
 from PyQt5.QtGui import *
-from Editor.Parser import Parser
+from Clochur.Parser import Parser
 
 
 
@@ -34,8 +34,16 @@ class ClochurLexer(QsciLexerCustom):
         self.QUOTES = ['"']
         self.PARENTHESIS = ["[", "]"]
 
-        self.PRIMARY = ['define', 'def-syntax' , 'True', 'False', 'lambda', '-', '+',
-            '*', '/', '>' ,'=','<','>=','<=', 'if', 'docu', 'font', 'font-family']
+        self.parent = parent
+
+        
+        macro_list = ['docu', 'font', 'font-family','font-size','underline','bold','italic']
+        boolean_list = ['True', 'False']
+        operator_list = [ '-', '+', '*', '/', '>' ,'=','<','>=','<=']
+        # SILE and SILE-STRING-ADD! is internal, so they're not added.
+        function_list = ['if', 'docu', 'docu-para', 'script', 'call','xml-to-string', 'begin',
+            'str','str-append','set!','print', 'define', 'def-syntax', 'lambda', 'eval']
+        self.PRIMARY = macro_list + boolean_list + operator_list + function_list
 
         self.split_pattern = re.compile(r'(\s+|\\%|%|\\\[|\\\]|[[]|[]])')
 
@@ -106,7 +114,7 @@ class ClochurLexer(QsciLexerCustom):
 
 
         self.startStyling(start, 0x1f)
-        rainbow_state = 0
+        rainbow_state = 0 # 0~6  = Rainbowmode ; 0~6 + 10 (i.e. 10~16)  = Rainbowmode with string
 
         index = SCI(QsciScintilla.SCI_LINEFROMPOSITION, start)
 
@@ -128,7 +136,7 @@ class ClochurLexer(QsciLexerCustom):
             #print(line_utf8_splitted_len_pair)
 
             is_comment = False
-            is_string = False
+            next_is_defined_var = False
 
             i = 0
             if index > 0:
@@ -140,12 +148,37 @@ class ClochurLexer(QsciLexerCustom):
 
             for item in line_utf8_splitted_len_pair:
 
+                ## add to complete list
+                #if item["str"] in [ "define", "def-syntax"]:
+                #    next_is_defined_var = True
+                #elif next_is_defined_var == True and not (item["str"] in ["[","]"]):
+                #    print(next_is_defined_var,item["str"])
+                #    self.parent.append_autocompletion_item(item["str"])
+                #    next_is_defined_var = False
+                #else:
+                #    pass
 
                 '''comment'''
                 if item["str"] == "%":
                     is_comment = True
                 if is_comment == True:
                     new_state = self.Comment # end of comment
+                
+                # string
+                elif re.match(tmp_parser.string_pattern ,item["str"]):
+                    new_state = self.String
+                elif re.match(r"[\"]([^\"\\]|[\\][\"nt]|[\\][\\])+?", item["str"]):
+                    rainbow_state += 10
+                    new_state = self.String
+                elif (re.match(r"([^\"\\]|[\\][\"nt]|[\\][\\])+?[\"]" ,item["str"]) or re.match(r'["]' ,item["str"])):
+                    new_state = self.String
+                    rainbow_state -= 10
+                
+                elif item["str"] == "]" and rainbow_state >= 10:
+                    new_state = self.String
+                elif rainbow_state >= 10:
+                    new_state = self.String
+
                 elif item["str"] in self.PRIMARY: # keywords
                     new_state = self.Keyword
 
@@ -154,26 +187,25 @@ class ClochurLexer(QsciLexerCustom):
                     new_state = self.Number
                 elif re.match(tmp_parser.float_pattern, item["str"]):
                     new_state = self.Number
-                
-                # string
-                elif re.match(tmp_parser.string_pattern ,item["str"]):
-                    new_state = self.String
-                elif re.match(r"[\"]([^\"\\]|[\\][\"\n\t]|[\\])*?", item["str"]):
-                    is_string = True
-                    new_state = self.String
-                elif re.match(r"([^\"\\]|[\\][\"\n\t]|[\\])*?[\"]" ,item["str"]):
-                    new_state = self.String
-                    is_string = False
-                elif is_string == True:
-                    new_state = self.String
 
                 #parenthesis: rainbow mode
                 elif item["str"] == "[":
-                    new_state = getattr(self, "Rainbow" + str(rainbow_state))
-                    rainbow_state = (rainbow_state + 1) % 7
+                    if rainbow_state >= 10:
+                        new_state = self.String
+                    elif rainbow_state < 7:
+                        print("rainbow_state" + str(type(rainbow_state)) + str(rainbow_state))
+                        new_state = getattr(self, "Rainbow" + str(rainbow_state))
+                        rainbow_state = (rainbow_state + 1) % 7
+                    else:
+                        pass
                 elif item["str"] == "]":
-                    rainbow_state = (rainbow_state - 1) % 7
-                    new_state = getattr(self, "Rainbow" + str(rainbow_state))
+                    if rainbow_state >= 10:
+                        new_state = self.String
+                    elif rainbow_state < 7:
+                        rainbow_state = (rainbow_state - 1) % 7
+                        new_state = getattr(self, "Rainbow" + str(rainbow_state))
+                    else:
+                        pass
                 else:
                     pass
 

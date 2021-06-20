@@ -2,6 +2,28 @@
 [script "packages/font-fallback"]
 [script "packages/grid"]
 
+[define section-var 1]
+[define sub-section-var 1]
+[define section-title ""]
+
+% custom macro
+[def-syntax section
+[[_ x][begin
+[set! section-title [str-append [str-append [str section-var] [str ". "  ]] [str x]]]
+[font [[size "20pt"][weight "800"]] section-title]
+[set! section-var [+ section-var 1]]
+[set! sub-section-var 1]
+]]]
+
+% custom macro
+
+
+[def-syntax subsection
+[[_ x][begin
+[set! section-title [str-append [str-append [str sub-section-var] [str ". "  ]] [str x]]]
+[font [[size "16pt"][weight "600"]] section-title]
+[set! sub-section-var [+ sub-section-var 1]]
+]]]
 
 
 [docu-para [[class "book"][papersize "b5"]]]
@@ -12,9 +34,11 @@
 
 [font-size "20pt" "Welcome to use"] [font [[family "sligeach_orig"][size "20pt"]] "Clóċur"][font-size "20pt" ", a toy editor, toy intepreter and a toy typesetting-engine frontend."]
 
-[call section "What is Clochur?"]
+[section "What is Clochur?"]
 
-Clochur, or printed as [str "\""][font-family "sligeach_orig" "Clóċur" ][str "\""] in Irish language (Clóċur as Roman type, which means [q]typesetting[q]), is a toy-lisp typesetting language with a intepreter written in Python, and with a simple Editor written in PyQt and Qscintilla.
+
+
+Clochur, or printed as "\""[font-family "sligeach_orig" "Clóċur"]"\"" in Irish language ([italic "\"CLOW-kur\""] Clóċur as Roman type, which means [q]typesetting[q]), is a toy-lisp typesetting language with a intepreter written in Python 3, and with a simple Editor written in PyQt5 and QScintilla.
 
 It generate a XML that is readable for SILE, which is a typesetting engine written in Lua,
 and it generate PDF with SILE.
@@ -28,4 +52,23 @@ The functions that it has (although may be buggy or needed to be tested) is:
  - count basic arithmetic expression.
 
 [str "- lambda function"], function definition.
-]
+
+[section "Simple manual"]
+
+[subsection "Macro"]
+
+Using 'def-syntax', you can add your macro to sile. the example is a "custom-section" macro:
+
+[font-family "Noto Sans Mono CJK TC"
+% custom macro
+"[def-syntax \"section\" 
+
+[[_ x][begin] ]
+
+[set! section-title [str-append [str-append [str [str \"section-var\"]] [str \". \"  ]] [str x]]]
+
+[font [[size \"20pt\"][weight \"800\"]] [str \"section-title\"]]
+
+[set! [str \"section-var\"] [+ [str \"section-var\"] 1]]
+
+]]]"

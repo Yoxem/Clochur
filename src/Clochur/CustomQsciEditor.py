@@ -2,9 +2,9 @@
 #-*-coding:utf-8-*-
 
 from PyQt5.QtGui import *
-from PyQt5.Qsci import QsciScintilla
+from PyQt5.Qsci import QsciScintilla, QsciAPIs
 
-from Editor.ClochurLexer import ClochurLexer
+from Clochur.ClochurLexer import ClochurLexer
 
 class CustomQsciEditor(QsciScintilla):
     def __init__(self, parent=None):
@@ -15,8 +15,7 @@ class CustomQsciEditor(QsciScintilla):
 
         self.tab_width = 4
 
-        lexer = ClochurLexer(self)
-        self.setLexer(lexer)
+       
 
         # Margin 0 for line numbers
         font = QFont()
@@ -50,6 +49,39 @@ class CustomQsciEditor(QsciScintilla):
         self.setIndentationsUseTabs(False)
         self.setTabWidth(4)
         self.setBackspaceUnindents(True)
+
+        #  set auto complete 
+        
+        #set lexer
+        self.lexer = ClochurLexer(self)
+        self.auto_complete_api = QsciAPIs(self.lexer) # autocomplete function
+        self.setLexer(self.lexer)
+        
+        self.setAutoCompletionCaseSensitivity(True)
+
+        self.setAutoCompletionReplaceWord(False)
+
+        # Use the predefined APIs as the source. 
+        self.setAutoCompletionSource(QsciScintilla.AcsAll)
+
+
+
+        # after 1 character, show completetion
+        self.setAutoCompletionThreshold(1)
+
+        # add autocompletion items
+        autocompletions = self.lexer.PRIMARY
+    
+        
+        for ac in autocompletions:
+            self.auto_complete_api.add(ac)
+
+        # "prepare" the QsciAPIs-object: 
+        self.auto_complete_api.prepare()
+
+    def append_autocompletion_item(self, item):
+        self.auto_complete_api.add(item)
+        self.auto_complete_api.prepare()
 
     def set_word_wrap(self):
         self.setWrapMode(QsciScintilla.WrapMode.WrapWord)

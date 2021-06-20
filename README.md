@@ -3,6 +3,7 @@ A Scheme-like typesetting LISP interpreter and editor that using SILE typesettin
 
 
 ## Dependencies
+* Python3
 * PyQt5>=5.15
 * QScintilla>=2.12
 * SILE>=0.10
@@ -20,10 +21,10 @@ see `src/example.pdf`
 
 To make a wheel package, run the following command in the root folder:
 
-  `python setup.py bdist_wheel`
+  `python3 setup.py bdist_wheel`
 
 and then:
 
   `cd dist; ls`
 
-`Clochur-x.y.z-py3-none-any.whl` will in it.
+`Clochur-x.y.z-py3-none-any.whl` will be in it.
