@@ -168,10 +168,12 @@ class ClochurLexer(QsciLexerCustom):
                 # string
                 elif re.match(tmp_parser.string_pattern ,item["str"]):
                     new_state = self.String
-                elif re.match(r"[\"]([^\"\\]|[\\][\"nt]|[\\][\\])+?", item["str"]):
+                elif (re.match(r"[\"]([^\"\\]|[\\][\"nt]|[\\][\\])+?", item["str"]) or re.match(r'["]' ,item["str"])) \
+                    and rainbow_state < 10:
                     rainbow_state += 10
                     new_state = self.String
-                elif (re.match(r"([^\"\\]|[\\][\"nt]|[\\][\\])+?[\"]" ,item["str"]) or re.match(r'["]' ,item["str"])):
+                elif (re.match(r"([^\"\\]|[\\][\"nt]|[\\][\\])+?[\"]" ,item["str"]) or re.match(r'["]' ,item["str"])) \
+                    and rainbow_state >= 10:
                     new_state = self.String
                     rainbow_state -= 10
                 
