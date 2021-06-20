@@ -42,7 +42,8 @@ class ClochurLexer(QsciLexerCustom):
         operator_list = [ '-', '+', '*', '/', '>' ,'=','<','>=','<=']
         # SILE and SILE-STRING-ADD! is internal, so they're not added.
         function_list = ['if', 'docu', 'docu-para', 'script', 'call','xml-to-string', 'begin',
-            'str','str-append','set!','print', 'define', 'def-syntax', 'lambda', 'eval']
+            'str','str-append','set!','print', 'define', 'def-syntax', 'lambda', 'eval','cons',
+            'car','cdr','ls-ref','ls']
         self.PRIMARY = macro_list + boolean_list + operator_list + function_list
 
         self.split_pattern = re.compile(r'(\s+|\\%|%|\\\[|\\\]|[[]|[]])')

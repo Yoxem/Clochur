@@ -59,16 +59,46 @@ The functions that it has (although may be buggy or needed to be tested) is:
 
 Using 'def-syntax', you can add your macro to sile. the example is a "custom-section" macro:
 
-[font-family "Noto Sans Mono CJK TC"
+[font-family "Noto Sans Mono CJK TC" "123
+
+124"]
+
+underline
+bold
+italic
+font-size
+font-family
+font
+begin
+cons
+car
+cdr
+ls-ref
+ls
+begin
+script
+docu-para
+call
+xml-to-string
+SILE-STRING-ADD!
+SILE
+print
+set!
+def-syntax
+define function, closure, lambda
+str
+str-append
+
+
+
+
+
+]
 % custom macro
-"[def-syntax \"section\" 
 
-[[_ x][begin] ]
 
-[set! section-title [str-append [str-append [str [str \"section-var\"]] [str \". \"  ]] [str x]]]
+%[set! section-title [str-append [str-append [str [str \"section-var\"]] [str \". \"  ]] [str x]]]
 
-[font [[size \"20pt\"][weight \"800\"]] [str \"section-title\"]]
+%[font [[size \"20pt\"][weight \"800\"]] [str \"section-title\"]]
 
-[set! [str \"section-var\"] [+ [str \"section-var\"] 1]]
-
-]]]"
+%[set! [str \"section-var\"] [+ [str \"section-var\"] 1]]
