@@ -4,7 +4,8 @@ A Scheme-like typesetting LISP interpreter and editor that using SILE typesettin
 ## Screenshot
 ![screenshot](https://user-images.githubusercontent.com/184107/122680547-47c8e000-d222-11eb-8ac3-be02df28e4b0.png)
 
-
+## License
+GPLv3 (except those inside `thirdparty/`)
 
 ## Dependencies
 * Python3
