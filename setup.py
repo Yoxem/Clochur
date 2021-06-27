@@ -5,7 +5,7 @@ from glob import glob
 from setuptools import find_packages, setup
 
 about = {}
-with open("./src/Editor/__about__.py") as about_info:
+with open("./src/Clochur/__about__.py") as about_info:
     exec(about_info.read(), about)
 
 third_party_files_and_dir = glob('thirdparty/**',recursive=True)
@@ -39,14 +39,16 @@ setup(
 
     entry_points={
         'gui_scripts': [
-            'clochur = Editor.__init__:entry_point'
+            'clochur = Clochur.__init__:entry_point'
         ]
     },
 
 	packages=find_packages(where='src'),
-    package_dir={'Editor': 'src/Editor'},
-    package_data={'Editor': ['*.pdf', '*.qrc',
+    package_dir={'Clochur': 'src/Clochur'},
+    package_data={'Clochur': ['*.pdf', '*.qrc',
                              '../resources/*.svg',
+                             '../../example/*.clc',
+                             '../../example/*.png',
 							 '../thirdparty/pdfjs/**',
                              '../thirdparty/pdfjs/**/**',
                              '../thirdparty/pdfjs/**/**/**',

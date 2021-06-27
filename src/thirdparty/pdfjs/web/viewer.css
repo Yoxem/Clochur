@@ -2593,46 +2593,67 @@ html[dir="rtl"] .toolbarButton#secondaryToolbarToggle::before {
   mask-image: var(--toolbarButton-presentationMode-icon);
 }
 
-.toolbarButton.print::before {
+/* undisplay it */
+.toolbarButton.print{
+	display: none
+}
+
+/* undisplay it */
+.toolbarButton.download{
+	display: none
+}
+
+/* undisplay it */
+.toolbarButton.openfile{
+	display: none
+}
+
+.toolbarButton.print {
+	display: none /* undisplay it */ /*
   -webkit-mask-image: url(images/toolbarButton-print.svg);
   -webkit-mask-image: var(--toolbarButton-print-icon);
   mask-image: url(images/toolbarButton-print.svg);
-  mask-image: var(--toolbarButton-print-icon);
+  mask-image: var(--toolbarButton-print-icon); */
 }
 
-.secondaryToolbarButton.print::before {
+.secondaryToolbarButton.print {
+	display: none /* undisplay it */ /*
   -webkit-mask-image: url(images/toolbarButton-print.svg);
   -webkit-mask-image: var(--toolbarButton-print-icon);
   mask-image: url(images/toolbarButton-print.svg);
-  mask-image: var(--toolbarButton-print-icon);
+  mask-image: var(--toolbarButton-print-icon); */
 }
 
-.toolbarButton.openFile::before {
+.toolbarButton.openFile {
+	display: none /* undisplay it */ /*
   -webkit-mask-image: url(images/toolbarButton-openFile.svg);
   -webkit-mask-image: var(--toolbarButton-openFile-icon);
   mask-image: url(images/toolbarButton-openFile.svg);
-  mask-image: var(--toolbarButton-openFile-icon);
+  mask-image: var(--toolbarButton-openFile-icon); */
 }
 
-.secondaryToolbarButton.openFile::before {
+.secondaryToolbarButton.openFile {
+	display: none /* undisplay it */ /*
   -webkit-mask-image: url(images/toolbarButton-openFile.svg);
   -webkit-mask-image: var(--toolbarButton-openFile-icon);
   mask-image: url(images/toolbarButton-openFile.svg);
-  mask-image: var(--toolbarButton-openFile-icon);
+  mask-image: var(--toolbarButton-openFile-icon); */
 }
 
-.toolbarButton.download::before {
+.toolbarButton.download {
+	display: none /* undisplay it */ /*
   -webkit-mask-image: url(images/toolbarButton-download.svg);
   -webkit-mask-image: var(--toolbarButton-download-icon);
   mask-image: url(images/toolbarButton-download.svg);
-  mask-image: var(--toolbarButton-download-icon);
+  mask-image: var(--toolbarButton-download-icon); */
 }
 
-.secondaryToolbarButton.download::before {
+.secondaryToolbarButton.download {
+	display: none /* undisplay it */ /*
   -webkit-mask-image: url(images/toolbarButton-download.svg);
   -webkit-mask-image: var(--toolbarButton-download-icon);
   mask-image: url(images/toolbarButton-download.svg);
-  mask-image: var(--toolbarButton-download-icon);
+  mask-image: var(--toolbarButton-download-icon); */
 }
 
 .secondaryToolbarButton.bookmark {
