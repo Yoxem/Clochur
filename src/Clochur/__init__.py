@@ -131,9 +131,14 @@ class Window(QMainWindow):
         self.about_action.triggered.connect(self.about_call)       
 
         self.bold_action = QAction(QIcon(":text-bold.svg"), "&Bold", self)
+        self.bold_action.triggered.connect(self.bold_call)
+
         self.italic_action = QAction(QIcon(":text-italic.svg"), "&Italic", self)
-        self.strike_action = QAction(QIcon(":text-strikethrough.svg"), "Stri&ke", self)
+        self.italic_action.triggered.connect(self.italic_call)
+
         self.underline_action = QAction(QIcon(":text-underline.svg"), "&Underline", self)
+        self.underline_action.triggered.connect(self.underline_call)
+
 
     def _createMenuBar(self):
         menuBar = QMenuBar(self)
@@ -192,6 +197,15 @@ class Window(QMainWindow):
         os.system('clochur')
 
     def open_call(self):
+        open_file = False
+        if self.editor.isModified():
+            reply = QMessageBox.question(self,'','Do You want to save this file before open a file? The text has been modified', 
+                QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel, QMessageBox.No)
+            if reply == QMessageBox.Yes:
+                self.save_as_call()
+            else:
+                pass
+
         file_path = QFileDialog.getOpenFileName(self, 'Open file...', self.opened_file_dirname, "CLC typesetting format (*.clc)")
         if file_path[0] != '':
             self.filename = os.path.basename(file_path[0])
@@ -341,12 +355,29 @@ class Window(QMainWindow):
 
     def select_all_call(self):
         self.editor.selectAll()
+    
+    def bold_call(self):
+        selected_text = self.editor.selectedText()
+        self.editor.replaceSelectedText(f'[bold {selected_text}]')
+
+    def italic_call(self):
+        selected_text = self.editor.selectedText()
+        self.editor.replaceSelectedText(f'[italic {selected_text}]')
+
+    def underline_call(self):
+        selected_text = self.editor.selectedText()
+        self.editor.replaceSelectedText(f'[underline {selected_text}]')
+
+    def add_font_call(self):
+        selected_text = self.editor.selectedText()
+        font_family = self.font_combo_box.currentText()
+        self.editor.replaceSelectedText(f'[font-family "{font_family}" {selected_text}]')
 
     def about_call(self):
         
 
         self.about_dialog = QMessageBox.about(self, "About Clochur", __about__.version_no+"\n"+__about__.about_info)
-                
+       
 
     def _createEditToolBar(self):
         editToolBar = QToolBar("Edit", self)
@@ -394,19 +425,20 @@ class Window(QMainWindow):
 
         '''create font adder'''
         self.font_widget = QHBoxLayout()
-        font_combo_box = QComboBox()
+        self.font_combo_box = QComboBox()
         font_database = QFontDatabase()
         font_families = font_database.families()
 
-        font_combo_box.addItems(font_families)
-        line_edit = font_combo_box.lineEdit()
+        self.font_combo_box.addItems(font_families)
+        line_edit = self.font_combo_box.lineEdit()
         #line_edit.setFont(QFont(font_combo_box.currentText(),11))
         #print(type(font_combo_box.lineEdit()).__name__)
 
-        font_button = QPushButton("Insert font")
+        self.font_button = QPushButton("Insert font")
 
-        formatToolBar.addWidget(font_combo_box)
-        formatToolBar.addWidget(font_button)
+        formatToolBar.addWidget(self.font_combo_box)
+        formatToolBar.addWidget(self.font_button)
+        self.font_button.clicked.connect(self.add_font_call)
 
     def generate_untitled_title(self):
         json_file = os.path.join(self.tmp_folder, self.tmp_file)

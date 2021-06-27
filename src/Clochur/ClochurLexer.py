@@ -42,11 +42,11 @@ class ClochurLexer(QsciLexerCustom):
         operator_list = [ '-', '+', '*', '/', '>' ,'=','<','>=','<=']
         # SILE and SILE-STRING-ADD! is internal, so they're not added.
         function_list = ['if', 'docu', 'docu-para', 'script', 'call','xml-to-string', 'begin',
-            'str','str-append','set!','print', 'define', 'def-syntax', 'lambda', 'eval','cons',
+            'str','str-append', 'str-append-many','set!','print', 'define', 'def-syntax', 'lambda', 'eval','cons',
             'car','cdr','ls-ref','ls']
         self.PRIMARY = macro_list + boolean_list + operator_list + function_list
 
-        self.split_pattern = re.compile(r'(\s+|\\%|%|\\\[|\\\]|[[]|[]])')
+        self.split_pattern = re.compile(r'(\s+|\\%|%|\\\[|\\\]|[[]|[]]|\\\"|\")')
 
         font = QFont()
         font.setFamily(parent.font_family)
@@ -196,7 +196,6 @@ class ClochurLexer(QsciLexerCustom):
                     if rainbow_state >= 10:
                         new_state = self.String
                     elif rainbow_state < 7:
-                        print("rainbow_state" + str(type(rainbow_state)) + str(rainbow_state))
                         new_state = getattr(self, "Rainbow" + str(rainbow_state))
                         rainbow_state = (rainbow_state + 1) % 7
                     else:

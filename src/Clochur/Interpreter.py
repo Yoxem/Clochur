@@ -30,11 +30,16 @@ class Interpreter:
         self.preprocessing_commands = '''[def-syntax docu
     [[_ x] [SILE[docu-aux x]]]
     [[_ x y...] [SILE[docu-aux x y...]]]]
+    
 
 [def-syntax docu-aux
-    [[_ x] [SILE-STRING-ADD![str x]]]
-    [[_ [x...]] [SILE-STRING-ADD![str [x...]]]]
-    [[_ x y...] [begin[docu-aux x] [docu-aux y...]]]]
+    [[_ x] [str x]]
+    [[_ [x...]] [str [x...]]]
+    [[_ x y...] [str-append [docu-aux x] [docu-aux y...]]]]
+
+[def-syntax str-append-many
+    [[_ x y] [str-append x y]]
+    [[_ x y z...] [str-append x [str-append-many y z...]]]]
 
 [def-syntax font
 [[_ [para...] inner] [call font [para...] inner]]
@@ -77,6 +82,8 @@ class Interpreter:
     def remove_spaces_and_newlines_aux(self, sexp, is_inside_defstx):
         if isinstance(sexp, list):
             result = []
+            if sexp == []:
+                return sexp
             if isinstance(sexp[0], dict) and sexp[0]["token"] == "def-syntax":
                 is_inside_defstx = True
             if isinstance(sexp[0], dict) and sexp[0]["token"] == "docu" \
@@ -365,6 +372,7 @@ class Interpreter:
                 script_xml = ET.Element('script')
                 script_xml.attrib["src"] = self.destring(sexp[1]["token"])
                 self.silexml.append(script_xml)
+                return ""
 
         elif sexp[0]["token"] == "docu-para":
             if not len(sexp) == 2:
@@ -375,29 +383,42 @@ class Interpreter:
                 attrib_name = i[0]["token"]
                 attrib_value = self.destring(i[1]["token"])
                 self.silexml.attrib[attrib_name] = attrib_value
+            return ""
         
         # [call callee {[[attr1 val1] [attr2 val2] ...]} {inner_val}]
         elif sexp[0]["token"] == "call":
             callee = sexp[1]["token"]
             call_xml = ET.Element(callee)
-            if len(sexp) == 4 or (len(sexp) == 3 and isinstance(sexp[2], list)):
+            if len(sexp) == 4 or (len(sexp) == 3 and isinstance(sexp[2], list) and isinstance(sexp[2][0], list)):
                 for i in sexp[2]:
-                    attrib_name = i[0]["token"]
-                    attrib_value = self.destring(self.interprete_aux(i[1]))
-                    call_xml.attrib[attrib_name] = attrib_value
+                    if i == []:
+                        pass
+                    else:
+                        attrib_name = i[0]["token"]
+                        attrib_value = self.destring(self.interprete_aux(i[1]))
+                        call_xml.attrib[attrib_name] = attrib_value
 
                 if len(sexp) == 4:
-                    call_xml.text = self.destring(self.interprete_aux(sexp[3]))
+                    inner_text = self.destring(self.interprete_aux(sexp[3]))
+                    call_xml_text = ET.tostring(call_xml, encoding='unicode')
+                    matched = re.match(r"<("+callee+")([ ]*.*[ ]*)/>", call_xml_text)
+                    call_xml_head = "<" + matched.group(1) + matched.group(2) + ">"
+                    call_xml_tail = "</" + matched.group(1) + ">"
+                    call_xml_text = call_xml_head + inner_text + call_xml_tail
+
+                if len(sexp) == 3:
+                    call_xml_text = ET.tostring(call_xml,encoding='unicode')
                 
-                self.silexml.append(call_xml)
-                return SubXMLElement(call_xml)
+                return call_xml_text
             elif len(sexp) == 3:
-                call_xml.text = self.destring(self.interprete_aux(sexp[2]))
-                self.silexml.append(call_xml)
-                return SubXMLElement(call_xml)
+                    inner_text = self.destring(self.interprete_aux(sexp[2]))
+                    call_xml_head = "<"+callee+">"
+                    call_xml_tail = "</"+callee+">"
+                    call_xml_text = call_xml_head + inner_text + call_xml_tail
+
+                    return call_xml_text
             elif len(sexp) == 2:
-                self.silexml.append(call_xml)
-                return SubXMLElement(call_xml)
+                return ET.tostring(call_xml, encoding='unicode')
             else:
                 raise Exception("Line %d, Col. %d, the form of call is mal-formed." % (sexp[0]["line"], sexp[0]["col"]))
         
@@ -455,36 +476,43 @@ class Interpreter:
         
         # if it's a sub-xml-element, show the string form of it, or return the input unchanged.
         # It's recommended to use it only print it in terminal with 'print'
-        elif sexp[0]["token"] == "xml-to-string":
-            if len(sexp) != 2:
-                raise Exception("Line %d, Col. %d, the argument of SHOW-XML-TREE is mal-formed" % (sexp[0]["line"], sexp[0]["col"]))
-            else:
-                res = self.interprete_aux(sexp[1])
-                if isinstance(res, SubXMLElement):
-                    return ET.tostring(res.element, encoding='unicode')
-                else:
-                    return res
+        #elif sexp[0]["token"] == "xml-to-string":
+        #    if len(sexp) != 2:
+        #        raise Exception("Line %d, Col. %d, the argument of SHOW-XML-TREE is mal-formed" % (sexp[0]["line"], sexp[0]["col"]))
+        #    else:
+        #        res = self.interprete_aux(sexp[1])
+        #        if isinstance(res, SubXMLElement):
+        #            return ET.tostring(res.element, encoding='unicode')
+        #        else:
+        #            return res
 
         # append string to <sile>
-        elif sexp[0]["token"] == "SILE-STRING-ADD!":
-            subelements_found = [x for x in self.silexml.iter() if x != self.silexml]
-            if subelements_found:
-                if subelements_found[-1].tail == None:
-                    subelements_found[-1].tail = self.interprete_aux(sexp[1])
-                else:
-                    subelements_found[-1].tail += self.interprete_aux(sexp[1])
-            else:
-                if self.silexml.text == None:
-                    self.silexml.text = self.interprete_aux(sexp[1])
-                else:
-                    self.silexml.text += self.interprete_aux(sexp[1])
+        #elif sexp[0]["token"] == "SILE-STRING-ADD!":
+        #    subelements_found = [x for x in self.silexml.iter() if x != self.silexml]
+        #    if subelements_found:
+        #        if subelements_found[-1].tail == None:
+        #            subelements_found[-1].tail = self.interprete_aux(sexp[1])
+        #        else:
+        #            subelements_found[-1].tail += self.interprete_aux(sexp[1])
+        #    else:
+        #        if self.silexml.text == None:
+        #            self.silexml.text = self.interprete_aux(sexp[1])
+        #        else:
+        #            self.silexml.text += self.interprete_aux(sexp[1])
 
 
         elif sexp[0]["token"] == "SILE":
             inner = self.interprete_aux(sexp[1])
             
-            return ET.tostring(self.silexml, encoding="unicode")
+            orig_sile_xml = ET.tostring(self.silexml, encoding="unicode")
+            matched = re.match(r'(<sile(?:.*)>.*)(</sile>)', orig_sile_xml)
+            sile_before = matched.group(1)
+            sile_after = matched.group(2)
+            sile_xml_inserted = sile_before + inner + sile_after
 
+            return sile_xml_inserted
+
+        # applying function
         else:
             ret = self.apply(sexp)
             return ret

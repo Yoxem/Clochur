@@ -1,6 +1,7 @@
 [def-syntax q [[_] [str "\""]]]
 [script "packages/font-fallback"]
 [script "packages/grid"]
+[script "packages/image"]
 
 [define section-var 1]
 [define sub-section-var 1]
@@ -8,7 +9,7 @@
 
 % custom macro
 [def-syntax section
-[[_ x][begin
+[[_ x][str-append-many
 [set! section-title [str-append [str-append [str section-var] [str ". "  ]] [str x]]]
 [font [[size "20pt"][weight "800"]] section-title]
 [set! section-var [+ section-var 1]]
@@ -19,7 +20,7 @@
 
 
 [def-syntax subsection
-[[_ x][begin
+[[_ x][str-append-many
 [set! section-title [str-append [str-append [str sub-section-var] [str ". "  ]] [str x]]]
 [font [[size "16pt"][weight "600"]] section-title]
 [set! sub-section-var [+ sub-section-var 1]]
@@ -55,15 +56,40 @@ The functions that it has (although may be buggy or needed to be tested) is:
 
 [section "Simple manual"]
 
+[subsection "Editor interface"]
+
+[call img [[src "total-interface.png"] [height "200px"]]]
+
+
+
+[subsection "Arimetic calculation and variable and function definition"]
+
+[subsection "Special character"]
+
+
+[subsection "Font formatting"]
+
+[subsection "Call SILE function and packages"]
+
 [subsection "Macro"]
 
-Using 'def-syntax', you can add your macro to sile. the example is a "custom-section" macro:
+Using [font-family "Noto Sans Mono CJK TC" "def-syntax"], you can add your macro to sile. the example is a "custom-section" macro:
 
-[font-family "Noto Sans Mono CJK TC" "123
 
-124"]
 
-underline
+[call noindent][font-family "Noto Sans Mono CJK TC" "[def-syntax subsection"]
+
+[call noindent][font-family "Noto Sans Mono CJK TC" "[[_ x][str-append"]
+
+[call noindent][font-family "Noto Sans Mono CJK TC" "[set! section-title [str-append [str-append [str sub-section-var] [str \". \"  ]] [str x]]]"]
+
+[call noindent][font-family "Noto Sans Mono CJK TC" "[font [[size \"16pt\"][weight \"600\"]] section-title]"]
+
+[call noindent][font-family "Noto Sans Mono CJK TC" "set! sub-section-var [+ sub-section-var 1]]]]]"]
+
+
+
+[str "underline
 bold
 italic
 font-size
@@ -80,7 +106,7 @@ script
 docu-para
 call
 xml-to-string
-SILE-STRING-ADD!
+
 SILE
 print
 set!
@@ -88,17 +114,4 @@ def-syntax
 define function, closure, lambda
 str
 str-append
-
-
-
-
-
-]
-% custom macro
-
-
-%[set! section-title [str-append [str-append [str [str \"section-var\"]] [str \". \"  ]] [str x]]]
-
-%[font [[size \"20pt\"][weight \"800\"]] [str \"section-title\"]]
-
-%[set! [str \"section-var\"] [+ [str \"section-var\"] 1]]
+str-append-many" ]]
