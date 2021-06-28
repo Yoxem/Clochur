@@ -2,10 +2,14 @@
 [script "packages/font-fallback"]
 [script "packages/grid"]
 [script "packages/image"]
+[script "packages/url"]
+
 
 [define section-var 1]
 [define sub-section-var 1]
+[define image-var 1]
 [define section-title ""]
+[define image-desc ""]
 
 % custom macro
 [def-syntax section
@@ -26,6 +30,13 @@
 [set! sub-section-var [+ sub-section-var 1]]
 ]]]
 
+[def-syntax image-desc
+[[_  x][str-append-many
+[set! image-desc [str-append-many [str image-var] [str ". "  ] [str x]]]
+[call center [italic image-desc]]
+[set! sub-section-var [+ sub-section-var 1]]
+]]]
+
 
 [docu-para [[class "book"][papersize "b5"]]]
 [docu
@@ -35,11 +46,15 @@
 
 [font-size "20pt" "Welcome to use"] [font [[family "sligeach_orig"][size "20pt"]] "Clóċur"][font-size "20pt" ", a toy editor, toy intepreter and a toy typesetting-engine frontend."]
 
+Author: Yoxem Chen (aka Tan, Kian-ting) <[call href [[src "mailto:yoxem.tem98@nctu.edu.tw"]] "yoxem.tem98@nctu.edu.tw"]>
+
+Website: [call href [[src "https://www.github.com/Yoxem/Clochur"]] "https://www.github.com/Yoxem/Clochur"]
+
 [section "What is Clochur?"]
 
 
 
-Clochur, or printed as "\""[font-family "sligeach_orig" "Clóċur"]"\"" in Irish language ([italic "\"CLOW-kur\""] Clóċur as Roman type, which means [q]typesetting[q]), is a toy-lisp typesetting language with a intepreter written in Python 3, and with a simple Editor written in PyQt5 and QScintilla.
+Clochur, or printed as "\""[font-family "sligeach_orig" "Clóċur"]"\"" in Irish language ([italic "\"CLOW-kur\""] Clóċur as Roman type, which means [q]typesetting[q]), is a toy-lisp typesetting language with a intepreter written in Python 3, and with a simple editor written in PyQt5 and QScintilla.
 
 It generate a XML that is readable for SILE, which is a typesetting engine written in Lua,
 and it generate PDF with SILE.
@@ -54,11 +69,67 @@ The functions that it has (although may be buggy or needed to be tested) is:
 
 [str "- lambda function"], function definition.
 
+[subsection "Why it's called Clochur?"]
+
+The author has (unofficially) learned Irish language (for a while and uncontinuously), so use the name.
+
+[subsection "How is the language? It seems that it uses brackets insteads of parathesis."]
+
+The langauge is inspired by SILE and Scheme, even though it has some different characteristics. To make the code neat and consider that parathesis is used more often than bracket, so it's more suitable to use bracket for syntatical usage. 
+
+It's a toy language, so many of the function of Scheme, is not used here (for example call/cc), and there is no "\"let\"" to support local variables. However, you can call SILE function and using the packages of it with "\"call\"" and "\"script\"" respectively.
+
+[subsection "Does it support Taiwanese (Hokkien)/Hakka/Mandarin/Japanese/Korean or any other language that I want?"]
+
+SILE supports utf-8, and Clochur will generate a XML that is readable to SILE, as long as any language that SILE can support, Clochur will support. It you find any bug, please tell me.
+
 [section "Simple manual"]
 
 [subsection "Editor interface"]
 
 [call img [[src "total-interface.png"] [height "200px"]]]
+
+[image-desc "The interface of Clochur"]
+
+Clochur is not a WYSIWYG editor, you have to type the lisp language by your self. Nevertheless, it's not a pure text-editor, it contains a PDF viewer powered by PDF.js, If you have edited you code, you can click the green right arrow botton on the first toolbar to convert it to XML file, then generate and show PDF file from it.
+
+[call img [[src "toolbars.png"] [height "60pt"]]]
+
+[image-desc "The toolbars of Clochur"]
+
+The description of the botton of the 1st toolbar is shown below (from left to right):
+
+- Create a file (create a new window)
+
+- Open a file
+
+- Save a file
+
+- Save as...
+
+- Convert to PDF
+
+- Redo
+
+- Undo
+
+- Cut
+
+- Copy
+
+- Paste
+
+The description of the botton of the 2nd toolbar is shown below (from left to right):
+
+- apply "bold" macro to the selected text
+
+- apply "italic" macro to the selected text
+
+- apply "underline" macro to the selected text
+
+- "font" list
+
+- apply the "font" shown in the "font" list to the selected text 
 
 
 
@@ -74,7 +145,6 @@ The functions that it has (although may be buggy or needed to be tested) is:
 [subsection "Macro"]
 
 Using [font-family "Noto Sans Mono CJK TC" "def-syntax"], you can add your macro to sile. the example is a "custom-section" macro:
-
 
 
 [call noindent][font-family "Noto Sans Mono CJK TC" "[def-syntax subsection"]

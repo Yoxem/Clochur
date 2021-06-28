@@ -263,40 +263,55 @@ class Window(QMainWindow):
         pass
 
     def save_pdf_call(self):
+        convert_folder = self.opened_file_dirname
+
         dest_pdf_path = QFileDialog.getSaveFileName(self, 'Save pdf as...', self.opened_file_dirname, "Porfable document format (*.pdf)")
         if dest_pdf_path[0] != '':
             self.convert_call()
-            sile_pdf_path = os.path.join(self.tmp_folder, self.tmp_output_file+".pdf")
+            sile_pdf_path = os.path.join(convert_folder, self.tmp_output_file+".pdf")
             shutil.copyfile(sile_pdf_path, dest_pdf_path[0])
                
 
         pass
 
     def convert_call(self):
-        text = self.editor.text()
+        will_convert = True
+        if self.filename == None or self.editor.isModified():
+            reply = QMessageBox.question(self,'','You have to save the content before convert it. Save it?', 
+                QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            if reply == QMessageBox.Yes:
+                self.save_call()
+            else:
+                will_convert = False
 
-        parser = Parser()
-        try:
-            parse_tree = parser.get_clc_sexp(text)
-            intepreter = Interpreter()
-            result = intepreter.interprete(parse_tree)
+        if will_convert:
 
-            sile_xml_path = os.path.join(self.tmp_folder, self.tmp_output_file+".xml")
-            sile_pdf_path = os.path.join(self.tmp_folder, self.tmp_output_file+".pdf")
+            text = self.editor.text()
 
-            with open(sile_xml_path, "w") as xml:
-                xml.write(result)
-                xml.close()
+            parser = Parser()
+            try:
+                parse_tree = parser.get_clc_sexp(text)
+                intepreter = Interpreter()
+                result = intepreter.interprete(parse_tree)
 
-            subprocess.run([sile_command, sile_xml_path])
-            pdf_js_webviewer_list = self.findChildren(QtWebEngineWidgets.QWebEngineView)
-            pdf_js_webviewer = pdf_js_webviewer_list[-1]
-            pdf_js_webviewer.load_path(sile_pdf_path)
+                convert_folder = self.opened_file_dirname
+
+                sile_xml_path = os.path.join(convert_folder, self.tmp_output_file+".xml")
+                sile_pdf_path = os.path.join(convert_folder, self.tmp_output_file+".pdf")
+
+                with open(sile_xml_path, "w") as xml:
+                    xml.write(result)
+                    xml.close()
+
+                subprocess.run([sile_command, sile_xml_path])
+                pdf_js_webviewer_list = self.findChildren(QtWebEngineWidgets.QWebEngineView)
+                pdf_js_webviewer = pdf_js_webviewer_list[-1]
+                pdf_js_webviewer.load_path(sile_pdf_path)
             
-        except Exception as e:
-            error_message = QErrorMessage()
-            error_message.showMessage(str(e))
-            error_message.exec_()
+            except Exception as e:
+                error_message = QErrorMessage()
+                error_message.showMessage(str(e))
+                error_message.exec_()
 
 
 
@@ -468,10 +483,12 @@ class Window(QMainWindow):
         return "Untitled %d" % self.untitled_id
     
     def remove_tmp_outputs(self):
+
+        convert_folder = self.opened_file_dirname
         
-        sile_xml_path = os.path.join(self.tmp_folder, self.tmp_output_file+".xml")
-        sile_pdf_path = os.path.join(self.tmp_folder, self.tmp_output_file+".pdf")
-        sile_toc_path = os.path.join(self.tmp_folder, self.tmp_output_file+".toc")
+        sile_xml_path = os.path.join(convert_folder, self.tmp_output_file+".xml")
+        sile_pdf_path = os.path.join(convert_folder, self.tmp_output_file+".pdf")
+        sile_toc_path = os.path.join(convert_folder, self.tmp_output_file+".toc")
 
         if os.path.isfile(sile_xml_path):
             os.remove(sile_xml_path)

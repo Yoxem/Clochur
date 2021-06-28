@@ -32,10 +32,10 @@ class Interpreter:
     [[_ x y...] [SILE[docu-aux x y...]]]]
     
 
-[def-syntax docu-aux
-    [[_ x] [str x]]
-    [[_ [x...]] [str [x...]]]
-    [[_ x y...] [str-append [docu-aux x] [docu-aux y...]]]]
+%[def-syntax docu-aux
+%    [[_ x] [str x]]
+%    [[_ [x...]] [str [x...]]]
+%    [[_ x y...] [str-append [docu-aux x] [docu-aux y...]]]]
 
 [def-syntax str-append-many
     [[_ x y] [str-append x y]]
@@ -126,14 +126,17 @@ class Interpreter:
             return string
 
     # \[ => [ ; \] => ] ; \\ => \
-    def remove_escaping_chars(self, sexp):
+    def remove_and_change_escaping_chars(self, sexp):
         if isinstance(sexp, list):
-            sexp = [self.remove_escaping_chars(x) for x in sexp]
+            sexp = [self.remove_and_change_escaping_chars(x) for x in sexp]
         elif not sexp["type"] in ["int", "flo"]:
             sexp_word = sexp["token"]
             sexp_word = sexp_word.replace("\\[", "[")
             sexp_word = sexp_word.replace("\\]", "]")
             sexp_word = sexp_word.replace("\\\\", "\\")
+            sexp_word = sexp_word.replace("&", "&amp;")
+            sexp_word = sexp_word.replace("<", "&lt;")
+            sexp_word = sexp_word.replace(">", "&gt;")
             sexp["token"] = sexp_word
         else:
             pass
@@ -142,7 +145,7 @@ class Interpreter:
 
 
     def interprete(self, sexps):
-        sexps = self.remove_escaping_chars(sexps)
+        sexps = self.remove_and_change_escaping_chars(sexps)
         sexps = self.remove_spaces_and_newlines(sexps)
         result = None
 
@@ -500,7 +503,14 @@ class Interpreter:
         #        else:
         #            self.silexml.text += self.interprete_aux(sexp[1])
 
+        elif sexp[0]["token"] == "docu-aux":
+            args = sexp[1:]
+            new_args = [[{"token":"str", "style":"sym"} , arg] for arg in args]
+            new_args_processed = [self.interprete_aux(arg) for arg in new_args]
 
+            return "".join(new_args_processed)
+        
+        
         elif sexp[0]["token"] == "SILE":
             inner = self.interprete_aux(sexp[1])
             

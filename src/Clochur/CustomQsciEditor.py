@@ -17,15 +17,7 @@ class CustomQsciEditor(QsciScintilla):
 
        
 
-        # Margin 0 for line numbers
-        font = QFont()
-        font.setFamily(self.font_family)
-        font.setPointSize(self.font_size)
-        fontMetrics = QFontMetrics(font)
-        self.setMarginsFont(font)
-        self.setMarginWidth(0, fontMetrics.width("00") + 6)
-        self.setMarginLineNumbers(0, True)
-        self.setMarginsBackgroundColor(QColor("#cccccc"))
+
 
         # brace matching
 
@@ -78,6 +70,17 @@ class CustomQsciEditor(QsciScintilla):
 
         # "prepare" the QsciAPIs-object: 
         self.auto_complete_api.prepare()
+
+        # Margin 0 for line numbers
+        font = QFont()
+        font.setFamily(self.font_family)
+        font.setPointSize(self.font_size)
+        fontMetrics = QFontMetrics(font)
+        self.setMarginsFont(font)
+        self.setMarginWidth(0, fontMetrics.width("000") + 5)
+        self.setMarginLineNumbers(0, True)
+        self.setMarginsBackgroundColor(QColor("#cccccc"))
+
 
     def append_autocompletion_item(self, item):
         self.auto_complete_api.add(item)
