@@ -2,7 +2,7 @@
 A Scheme-like typesetting LISP interpreter and editor that using SILE typesetting Engine.
 
 ## Screenshot
-![screenshot](https://user-images.githubusercontent.com/184107/122680547-47c8e000-d222-11eb-8ac3-be02df28e4b0.png)
+![screenshot](https://user-images.githubusercontent.com/184107/123665795-322f6800-d86b-11eb-9d0b-55067ae3a50c.png)
 
 ## License
 GPLv3 (except those inside `thirdparty/`)
