@@ -20,7 +20,7 @@ It's recommended to install the wheel file (.whl) of it with pip3:
 
 ## Manual
 
-see `src/example.pdf`
+see `src/manual.pdf`
 
 ## Packaging
 
