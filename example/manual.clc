@@ -81,7 +81,7 @@ It's a toy language, so many of the function of Scheme, is not used here (for ex
 
 [subsection "Does it support Taiwanese (Hokkien)/Hakka/Mandarin/Japanese/Korean or any other language that I want?"]
 
-SILE supports utf-8, and Clochur will generate a XML that is readable to SILE, as long as any language that SILE can support, Clochur will support. It you find any bug, please tell me.
+SILE supports utf-8, and Clochur will generate a XML that is readable to SILE, as long as any language that SILE can support, Clochur will support. If you find any bug, please tell me.
 
 [section "Simple manual"]
 
