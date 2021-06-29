@@ -131,11 +131,40 @@ The description of the botton of the 2nd toolbar is shown below (from left to ri
 
 - apply the "font" shown in the "font" list to the selected text 
 
+[subsection "Basic input, [docu], and special character"]
+
+Basically, you can type the sentence that you want to type directly in sile. However, the document should be inside a macro call "\"docu\"". For example:
+
+[call noindent][font-family "Noto Sans Mono CJK TC" [str "[docu Hello world!]"]]
+
+It will show
+
+Hello world!
+
+However, if it's a macro name (eg. "docu, font, font-family, ..."), you have to put them between 2 quotation marks"\"". eg:
+
+[call noindent][font-family "Noto Sans Mono CJK TC" "[docu \"docu\"]"]
+
+It will show
+
+"docu"
+
+To type brackets \[ & \], you should type \\\[ & \\\] respectively; and to type blackslash \\, you should type \\\\. To type quotation mark \", you should type \\\". A word or a sentence between 2 quotation marks (\") will be shown without the quotation marks. eg: [font-family "Noto Sans Mono CJK TC" "\"It will be there.\""]
+
+will be shown as:
+
+"It will be there."
+
+To make the quotation mark shown, you should enclose it between quotation mark \" and using \\\". [font-family "Noto Sans Mono CJK TC" "\"\\\"It will be there.\\\"\""] will be shown as:
+
+"\"It will be there.\""
+
+
+
 
 
 [subsection "Arimetic calculation and variable and function definition"]
 
-[subsection "Special character"]
 
 
 [subsection "Font formatting"]

@@ -116,11 +116,12 @@ class Interpreter:
             string = str(string)
         if re.match(string_pattern, string):
             # reverse the escape characters
-            while True:
-                string_before = string
-                string = re.sub(r'\\"(.+)',r'"\1',string)
-                if string_before == string:
-                    break
+            #while True:
+            #    string_before = string
+            #    string = string.replace('\\"','"')
+                #if string_before == string:
+                #    break
+            #string = string.replace('\\"','"')
             return string[1:-1]
         else:
             return string
@@ -133,6 +134,7 @@ class Interpreter:
             sexp_word = sexp["token"]
             sexp_word = sexp_word.replace("\\[", "[")
             sexp_word = sexp_word.replace("\\]", "]")
+            sexp_word = sexp_word.replace("\\\"", "\"")
             sexp_word = sexp_word.replace("\\\\", "\\")
             sexp_word = sexp_word.replace("&", "&amp;")
             sexp_word = sexp_word.replace("<", "&lt;")
