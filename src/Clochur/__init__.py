@@ -302,8 +302,12 @@ class Window(QMainWindow):
                 with open(sile_xml_path, "w") as xml:
                     xml.write(result)
                     xml.close()
-
-                subprocess.run([sile_command, sile_xml_path])
+                
+                try:
+                    subprocess.run([sile_command, sile_xml_path])
+                except FileNotFoundError as e:
+                    raise Exception("the command \"sile\" is not found. Please check if it's installed.")
+                
                 pdf_js_webviewer_list = self.findChildren(QtWebEngineWidgets.QWebEngineView)
                 pdf_js_webviewer = pdf_js_webviewer_list[-1]
                 pdf_js_webviewer.load_path(sile_pdf_path)
@@ -325,6 +329,8 @@ class Window(QMainWindow):
             if reply == QMessageBox.Yes:
                 if self.filename !=  None:
                     self.save_call()
+                    self.remove_tmp_outputs()
+                    app.exit()
                 else:
 
                     file_path = QFileDialog.getSaveFileName(self, 'Save file as...', self.opened_file_dirname, "CLC typesetting format (*.clc)")
@@ -386,7 +392,7 @@ class Window(QMainWindow):
     def add_font_call(self):
         selected_text = self.editor.selectedText()
         font_family = self.font_combo_box.currentText()
-        self.editor.replaceSelectedText(f'[font-family "{font_family}" {selected_text}]')
+        self.editor.replaceSelectedText(f'[font-family "{font_family}" "{selected_text}"]')
 
     def about_call(self):
         

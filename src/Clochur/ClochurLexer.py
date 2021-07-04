@@ -160,7 +160,7 @@ class ClochurLexer(QsciLexerCustom):
                 #    pass
 
                 '''comment'''
-                if item["str"] == "%":
+                if item["str"] == "%" and rainbow_state < 10:
                     is_comment = True
                 if is_comment == True:
                     new_state = self.Comment # end of comment

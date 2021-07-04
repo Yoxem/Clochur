@@ -288,10 +288,16 @@ class Interpreter:
 
         elif sexp[0]["token"] == "str-append":
             if len(sexp) != 3:
-                raise Exception("Ln %d, Col %d: the argument number of str should be 2" %
+                raise Exception("Ln %d, Col %d: the argument number of str-append should be 2" %
                         (sexp[0]["line"], sexp[0]["col"]))
             else:
-                return self.interprete_aux(sexp[1]) + self.interprete_aux(sexp[2])
+                lhs = self.destring(self.interprete_aux(sexp[1]))
+                rhs = self.destring(self.interprete_aux(sexp[2]))
+                if isinstance(lhs, str) and isinstance(rhs, str):
+                    return lhs + rhs
+                else:
+                    raise Exception("Ln %d, Col %d: the argument of str-append should be string" %
+                        (sexp[0]["line"], sexp[0]["col"]))
 
         elif sexp[0]["token"] == "print":
             if len(sexp) != 2:
@@ -440,42 +446,54 @@ class Interpreter:
 
         # (car List)
         elif sexp[0]["token"] == "car":
+            ls = self.interprete_aux(sexp[1])
             if len(sexp) != 2:
                 raise Exception("Line %d, Col. %d, the argument length should be 1" % (sexp[0]["line"], sexp[0]["col"]))
-            elif not isinstance(sexp[1], List):
+            elif not isinstance(ls, List):
                 raise Exception("Line %d, Col. %d, the argument is not a list." % (sexp[1]["line"], sexp[1]["col"]))
             else:
-                ls = sexp[1].ls
+                ls = ls.ls
                 return ls[0]
 
         # (cdr List)
         elif sexp[0]["token"] == "cdr":
+            ls = self.interprete_aux(sexp[1])
             if len(sexp) != 2:
                 raise Exception("Line %d, Col. %d, the argument length should be 1" % (sexp[0]["line"], sexp[0]["col"]))
-            elif not isinstance(sexp[1], List):
+            elif not isinstance(ls, List):
                 raise Exception("Line %d, Col. %d, the argument is not a list." % (sexp[1]["line"], sexp[1]["col"]))
             else:
-                ls = sexp[1].ls
-                return ls[1:]
+                ls = ls.ls
+                return List(ls[1:])
 
         # (cons any List)
         elif sexp[0]["token"] == "cons":
+            ls = self.interprete_aux(sexp[2])
             if len(sexp) != 3:
                 raise Exception("Line %d, Col. %d, the argument length should be 2" % (sexp[0]["line"], sexp[0]["col"]))
-            elif not isinstance(sexp[2], List):
+            elif not isinstance(ls, List):
                 raise Exception("Line %d, Col. %d, the 2nd argument of cons is not a list." % (sexp[2]["line"], sexp[2]["col"]))
             else:
                 car = sexp[1]
-                cdr = sexp[2].ls
-                result_ls = List([sexp[1]]+cdr)
+                cdr = ls.ls
+                result_ls = List([sexp[1]["token"]]+cdr)
                 return result_ls
         
 
         elif sexp[0]["token"] == "ls-ref":
+            ls = self.interprete_aux(sexp[1])
+            index = self.interprete_aux(sexp[2])
             if len(sexp) != 3:
                 raise Exception("Line %d, Col. %d, the argument length should be 1" % (sexp[0]["line"], sexp[0]["col"]))
-            elif not isinstance(sexp[1], List):
-                raise Exception("Line %d, Col. %d, the 2nd argument of cons is not a list." % (sexp[2]["line"], sexp[2]["col"]))
+            elif not isinstance(index, int):
+                raise Exception("Line %d, Col. %d, the 1st argument of cons is not a integer." % (sexp[2]["line"], sexp[2]["col"]))
+            elif not isinstance(ls, List):
+                raise Exception("Line %d, Col. %d, the 2nd argument of cons is not a List." % (ls, sexp[1]["col"]))
+            elif index >= len(ls.ls):
+                raise Exception("Line %d, Col. %d, List out of range")
+            else:
+                return ls.ls[index]
+
 
 
         
@@ -621,6 +639,8 @@ class SubXMLElement:
 class List:
     def __init__(self, ls):
         self.ls = ls
+    def __repr__(self):
+        return (f"&lt;List object of Clochur. list={self.ls}&gt;")
 
 # closure
 class Lambda:
@@ -633,3 +653,15 @@ class Lambda:
                 self.vars = [i["token"] for i in vars]
                 self.body = body
                 self.env = env
+    
+    def __str__(self):
+        parser = Parser()
+        body_sexp = parser.generate_printable_sexp(self.body)
+        return (f"&lt;Clojure object of Clochur. vars={self.vars}, " + \
+            "env=" +  str(self.env) + f", body={body_sexp}&gt;")
+
+    def __repr__(self):
+        parser = Parser()
+        body_sexp = parser.generate_printable_sexp(self.body)
+        return (f"&lt;Clojure object of Clochur. vars={self.vars}, " + \
+            "env=" +  str(self.env) + f", body={body_sexp}&gt;")
