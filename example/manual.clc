@@ -1,9 +1,9 @@
 [def-syntax q [[_] [str "\""]]]
 [script "packages/font-fallback"]
-[script "packages/grid"]
+%[script "packages/grid"]
 [script "packages/image"]
 [script "packages/url"]
-
+[script "packages/verbatim"]
 
 [define section-var 1]
 [define sub-section-var 1]
@@ -21,7 +21,11 @@
 ]]]
 
 % custom macro
+[def-syntax mono
+[[_ x][font-family "Noto Sans Mono CJK TC" x]]]
 
+
+% custom macro
 
 [def-syntax subsection
 [[_ x][str-append-many
@@ -40,15 +44,20 @@
 
 [docu-para [[class "book"][papersize "b5"]]]
 [docu
-[call grid [[spacing "15pt"]]]
+
+[call set [[parameter "document.baselineskip"][value "20pt"]]] % baselineskip changing
+%[call grid [[spacing "15pt"]]]
 [call font:add-fallback [[family "Noto Serif CJK TC"]]]
 [font-size "30pt" "Huan-gîng 使用 Clochur!"]
 
 [font-size "20pt" "Welcome to use"] [font [[family "sligeach_orig"][size "20pt"]] "Clóċur"][font-size "20pt" ", a toy editor, toy intepreter and a toy typesetting-engine frontend."]
+[call bigskip]
 
 Author: Yoxem Chen (aka Tan, Kian-ting) <[call href [[src "mailto:yoxem.tem98@nctu.edu.tw"]] "yoxem.tem98@nctu.edu.tw"]>
 
 Website: [call href [[src "https://www.github.com/Yoxem/Clochur"]] "https://www.github.com/Yoxem/Clochur"]
+
+[call bigskip]
 
 [section "What is Clochur?"]
 
@@ -149,6 +158,13 @@ It will show
 
 "docu"
 
+To modify the preferece of \[docu\], you should use \[docu-para\] before using it. Eg.
+
+[mono "[docu-para [[papersize \"B5\"]]]
+[docu ...]"]
+
+can change the paper size to B5
+
 To type brackets \[ & \], you should type \\\[ & \\\] respectively; and to type blackslash \\, you should type \\\\. To type quotation mark \", you should type \\\". A word or a sentence between 2 quotation marks (\") will be shown without the quotation marks. eg: [font-family "Noto Sans Mono CJK TC" "\"It will be there.\""]
 
 will be shown as:
@@ -159,58 +175,226 @@ To make the quotation mark shown, you should enclose it between quotation mark \
 
 "\"It will be there.\""
 
-
-
-
-
 [subsection "Arimetic calculation and variable and function definition"]
 
+It can using [mono "+ - * /"] to calculate plus, minus, multiplication, and division. and print the result in the pdf. eg.
 
+[font [[family "FreeSerif"][weight "900"]] "Arimetic calculation"]
+
+[mono "The result of 3 * 6 = [* 3 6]."]
+
+will output
+
+The result of 3 * 6 = [* 3 6].
+
+[font [[family "FreeSerif"][weight "900"]] "Define variable and change variable value"]
+
+To define a variable, you should use [mono "define"]:
+
+[mono "[define x [* 5 3]]"]
+
+To change  the value of a defined variable, you should use [mono "set!"]:
+
+[mono "[set! x 10]"]
+
+[font [[family "FreeSerif"][weight "900"]] "Define function and using lambda function"]
+
+To define a function, you should using [mono "define"] and a [mono "lambda"] function. It supports currying:
+
+ [mono "[define add1 [lambda [x] [+ x 1]]]"]
+
+ [mono "[add1 7] % return 8"][call smallskip]
+ 
+ [mono "[[lambda [x] [+ x 2]] 9] % return 11"][call smallskip]
+ 
+ [mono "[define sqrt-sum [lambda [y] [lambda [x] [+ [* x x] [* y y]]]]] % currying"][call smallskip]
+ 
+ [mono "[call smallskip] % add line breaker"][call smallskip]
+ 
+ [mono "[sqrt-sum 3][call smallskip] % return closure and force to break line"][call smallskip]
+ 
+ [mono "[[sqrt-sum 3] 4] % return 25"][call smallskip]
+ 
+ [mono "[define sum [lambda [x y] [+ x y]]][call smallskip] % define multi-var function and break line"][call smallskip]
+ 
+ [mono "[sum 9 10]"]
+
+
+[define add1 [lambda [x] [+ x 1]]]
+
+ [add1 7]
+
+ [[lambda [x] [+ x 2]] 9] % return 11
+ 
+ [define sqrt-sum [lambda [y] [lambda [x] [+ [* x x] [* y y]]]]] % currying
+ 
+ [call smallskip]
+ 
+ [sqrt-sum 3][call smallskip]
+ 
+ [[sqrt-sum 3] 4] % return 25
+ 
+ [define sum [lambda [x y] [+ x y]]][call smallskip] % define multi-var function and break line
+ 
+ [sum 9 10]
+ 
+ [mono "if, <, >, =, <=, >="] can be used to create recursive function. eg.[call smallskip]
+ 
+ [mono "[define a [lambda [x] [if [= x 1] 2 [str-append x [a [- x 1]]]]]][call smallskip]"][call smallskip]
+ 
+ [mono "[a 5]"]
+ 
+ [define function1 [lambda [x] [if [= x 1] [str 1] [str-append [str x] [function1 [- x 1]]]]]][call smallskip]
+ 
+ It returns
+ 
+ [function1 5]
 
 [subsection "Font formatting"]
 
+Bacically, you can use macro [mono "font"] to set the [str "font"] style. the attribute value should be quoted. eg.
+
+[mono
+"[font [[family \"Noto Serif CJK TC\"]] \"漢字測試。\"][call smallskip] %Set the font-family to write CJK characters"]
+
+
+[mono "%set font family and font weight from 100 (thiner), 200, ..., 900 (bolder)
+
+[font [[family \"FreeSerif\"][weight \"900\"]] \"font weight test\"]"]
+
+[mono "% set font style to italic and insert expression as it's argument
+
+[font [[style \"italic\"]]  [str [+ 9 9]]]"]
+
+[mono "% set font size
+
+[font [[size \"30pt\"]] \"text size test\""]
+
+
+will get
+
+
+[font [[family "Noto Serif CJK TC"]] "漢字測試。"][call smallskip] %Set the font-family to write CJK characters:
+
+%set font family and font weight from 100 (thiner), 200, ..., 900 (bolder)
+[font [[family "FreeSerif"][weight "900"]] "font weight test"] 
+
+% set font style to italic and and insert expression as it's argument
+[font [[style "italic"]] [str [+ 9 9]]]
+
+% set font size
+
+[font [[size "30pt"]] "text size test"]
+
+You can use the macros [mono "[bold {text}]"], [mono "[italic {text}]"], [mono "[font-family {font-family} {text}]"] and [mono "[font-size {font-size} {text}]"] to get these effects.
+
+Using [mono "underline"] macro, can [str "underline"] a word. eg:
+
+[mono "[underline \"underline test\"]"]
+
+will get
+
+[underline "underline test"]
+
 [subsection "Call SILE function and packages"]
 
+You can call sile function with [mono "call"], the usage is:
+
+[mono "[call function {[[para1 val1]{[para2 val2]}...]]} argument]"]
+
+Those inside braces {} is optional.
+
+To use SILE package, you can use macro[mono "[script source-origin]"].
+
+For example, to add a url, you can add:
+
+[script "packages/url"]
+[call href [[src "https://www.example.com"]] "https://www.example.com"]
+
 [subsection "Macro"]
+
+Macro is not a function, its syntax is changed before being evaluating.
 
 Using [font-family "Noto Sans Mono CJK TC" "def-syntax"], you can add your macro to sile. the example is a "custom-section" macro:
 
 
-[call noindent][font-family "Noto Sans Mono CJK TC" "[def-syntax subsection"]
+[call noindent][font-family "Noto Sans Mono CJK TC" "[define custom-section-title \"\"]"]
+[call noindent][font-family "Noto Sans Mono CJK TC" "[define custom-sub-section-var 0]"]
 
-[call noindent][font-family "Noto Sans Mono CJK TC" "[[_ x][str-append"]
+[call noindent][font-family "Noto Sans Mono CJK TC" "[def-syntax custom-subsection"]
 
-[call noindent][font-family "Noto Sans Mono CJK TC" "[set! section-title [str-append [str-append [str sub-section-var] [str \". \"  ]] [str x]]]"]
+[call noindent][font-family "Noto Sans Mono CJK TC" "[[_ x][str-append-many"]
 
-[call noindent][font-family "Noto Sans Mono CJK TC" "[font [[size \"16pt\"][weight \"600\"]] section-title]"]
+[call noindent][font-family "Noto Sans Mono CJK TC" "[set! custom-section-title [str-append [str-append [str sub-section-var] [str \". \"]] [str x]]]"]
 
-[call noindent][font-family "Noto Sans Mono CJK TC" "set! sub-section-var [+ sub-section-var 1]]]]]"]
+[call noindent][font-family "Noto Sans Mono CJK TC" "[font [[size \"16pt\"][weight \"600\"]] custom-section-title]"]
+
+[call noindent][font-family "Noto Sans Mono CJK TC" "[set! custom-sub-section-var [+ custom-sub-section-var 1]]]]]"]
+
+[define custom-section-title ""]
+[define custom-sub-section-var 1]
+
+[def-syntax custom-subsection
+
+[[_ x][str-append-many
+
+[set! custom-section-title [str-append [str-append [str custom-sub-section-var] [str ". "]] [str x]]]
+
+[font [[size "16pt"][weight "600"]] custom-section-title]
+
+[set! custom-sub-section-var [+ custom-sub-section-var 1]]]]]
+
+[mono "[custom-subsection \"123\"]"] will be:
+
+[custom-subsection "123"]
+
+[subsection "Other function and macro"]
+
+[font [[family "FreeSerif"][weight "900"]] "String appending"] 
+
+You can use [mono "[str-append str1 str2]"] to append a string to another, and you can use [mono "[str-append-many str1 str2 {str3 ...}]"] to append 2 or more strings. eg.
+
+[str-append [str 1] [str 2]]
+
+[str-append-many [str 1] [str 2] [str 3]]
+
+it can use to combine many commands, because the output is the combination of commands.
+
+[font [[family "FreeSerif"][weight "900"]] "Print and begin"] 
+
+[mono "[print str]"] print the str to the terminal, and [mono "[begin exp1 {exp2 ...}]"] executes the commands and return the return value of the last command.
+
+[font [[family "FreeSerif"][weight "900"]] "List"] 
+
+[mono "[ls item1 {item2 ...}]"] create a list. eg:
+
+[mono "[ls 1 2 3 4]"] returns
+
+[ls 1 2 3 4]
+
+[mono "car"] get the 1st element, and [mono "cdr"] get the rest of the list. [mono "[list-ref list index]"] get the ith-index (start from 0) of list, and [mono "[cons item list]"] combine a item to a list. eg.
+
+[mono "[define list [ls \"a\" \"b\" \"c\"]]"]
+
+[mono "[car list] % returns \"a\""]
+
+[mono "[cdr list] % returns [\"b\" \"c\"]"]
+
+[mono "[ls-ref list 1] % returns \"b\""]
+
+[mono "[cons 5 list] % returns \"b\""]
 
 
+will get
 
-[str "underline
-bold
-italic
-font-size
-font-family
-font
-begin
-cons
-car
-cdr
-ls-ref
-ls
-begin
-script
-docu-para
-call
-xml-to-string
+[define list [ls "a" "b" "c"]]
 
-SILE
-print
-set!
-def-syntax
-define function, closure, lambda
-str
-str-append
-str-append-many" ]]
+[car list] % returns "a"
+
+[cdr list] % returns ["b" "c"]
+
+[ls-ref list 1] % returns "b"
+
+[cons 5 list] % returns [5 "a" "b" "c"]
+
+]

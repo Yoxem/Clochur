@@ -19,7 +19,7 @@ setup(
     description='''A S-expression like typesetting language powered by SILE engine
                    with a simple editor''',
 
-    url="http://yoxem.github.com",
+    url="https://github.com/Yoxem/Clochur",
 
     install_requires=['PyQt5>=5.15', 'QScintilla>=2.12'],
 
