@@ -18,6 +18,12 @@ It's recommended to install the wheel file (.whl) of it with pip3:
 
   `pip3 install Clochur-x.y.z-py3-none-any.whl`
 
+## Command
+
+`clochur`
+
+Just type it in your CLI terminal.
+
 ## Manual
 
 see `src/manual.pdf`
