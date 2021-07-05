@@ -40,12 +40,12 @@ and then:
 
 Before package it, you should install [Stdeb](https://pypi.org/project/stdeb) first.
 
-  python3 setup.py sdist
-  cd dist
-  py2dsc -x ../stdeb.cfg Clochur-x.y.z.tar.gz
-  cd deb_dist/clochur-x.y.z
-  cd dpkg-buildpackage -rfakeroot -uc -us
-  cd ..; ls
-  ...
-  clochur_x.y.z-1_all.deb
-  ...
+    python3 setup.py sdist
+    cd dist
+    py2dsc -x ../stdeb.cfg Clochur-x.y.z.tar.gz
+    cd deb_dist/clochur-x.y.z
+    cd dpkg-buildpackage -rfakeroot -uc -us
+    cd ..; ls
+    ...
+    clochur_x.y.z-1_all.deb
+    ...
